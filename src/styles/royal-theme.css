@@ -1,0 +1,545 @@
+/* FOLUSHO VICTORY SCHOOLS - Royal Theme */
+/* Advanced styling with Royal Gold, Royal Purple, and Black */
+
+/* Royal Color Palette */
+:root {
+  /* Primary Royal Colors */
+  --royal-black: #0a0a0a;
+  --royal-black-light: #1a1a1a;
+  --royal-black-medium: #2d2d2d;
+  --royal-purple: #6b46c1;
+  --royal-purple-light: #8b5cf6;
+  --royal-purple-dark: #553c9a;
+  --royal-gold: #fbbf24;
+  --royal-gold-light: #fcd34d;
+  --royal-gold-dark: #d97706;
+  --royal-gold-metallic: #d4af37;
+  
+  /* Gradient Variations */
+  --gradient-royal-primary: linear-gradient(135deg, var(--royal-purple) 0%, var(--royal-purple-dark) 100%);
+  --gradient-royal-secondary: linear-gradient(135deg, var(--royal-gold) 0%, var(--royal-gold-dark) 100%);
+  --gradient-royal-dark: linear-gradient(135deg, var(--royal-black) 0%, var(--royal-black-medium) 100%);
+  --gradient-royal-mixed: linear-gradient(135deg, var(--royal-purple) 0%, var(--royal-gold) 50%, var(--royal-black) 100%);
+  --gradient-royal-subtle: linear-gradient(135deg, var(--royal-purple-light) 0%, var(--royal-gold-light) 100%);
+  
+  /* Glass Morphism with Royal Theme */
+  --glass-royal: rgba(107, 70, 193, 0.1);
+  --glass-royal-border: rgba(251, 191, 36, 0.2);
+  --glass-royal-shadow: rgba(0, 0, 0, 0.3);
+  
+  /* Text Colors */
+  --text-royal-primary: #ffffff;
+  --text-royal-secondary: rgba(255, 255, 255, 0.8);
+  --text-royal-muted: rgba(255, 255, 255, 0.6);
+  --text-royal-accent: var(--royal-gold);
+  
+  /* Shadow System */
+  --shadow-royal-small: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-royal-medium: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-royal-large: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-royal-glow: 0 0 20px rgba(251, 191, 36, 0.3);
+  --shadow-royal-purple-glow: 0 0 30px rgba(107, 70, 193, 0.4);
+  
+  /* Animation Timing */
+  --transition-royal-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-royal-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-royal-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-royal-bounce: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--gradient-royal-dark);
+  color: var(--text-royal-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Royal Background Effects */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(251, 191, 36, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(107, 70, 193, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+  animation: royalPulse 10s ease-in-out infinite;
+}
+
+@keyframes royalPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Royal Typography */
+.royal-text-gradient {
+  background: var(--gradient-royal-secondary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.royal-text-glow {
+  color: var(--royal-gold);
+  text-shadow: 
+    0 0 10px rgba(251, 191, 36, 0.5),
+    0 0 20px rgba(251, 191, 36, 0.3),
+    0 0 30px rgba(251, 191, 36, 0.1);
+}
+
+/* Royal Cards */
+.royal-card {
+  background: var(--glass-royal);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-royal-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-royal-medium);
+  transition: all var(--transition-royal-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.royal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-royal-secondary);
+  transform: scaleX(0);
+  transition: transform var(--transition-royal-smooth);
+}
+
+.royal-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-royal-large), var(--shadow-royal-glow);
+  border-color: var(--royal-gold);
+}
+
+.royal-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Royal Buttons */
+.royal-btn {
+  background: var(--gradient-royal-primary);
+  color: var(--text-royal-primary);
+  border: 1px solid var(--royal-purple);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-royal-smooth);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.royal-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-royal-secondary);
+  transition: left var(--transition-royal-smooth);
+  z-index: -1;
+}
+
+.royal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-royal-glow);
+  border-color: var(--royal-gold);
+}
+
+.royal-btn:hover::before {
+  left: 0;
+}
+
+.royal-btn:active {
+  transform: translateY(0);
+}
+
+.royal-btn-gold {
+  background: var(--gradient-royal-secondary);
+  border-color: var(--royal-gold);
+}
+
+.royal-btn-outline {
+  background: transparent;
+  border: 2px solid var(--royal-gold);
+  color: var(--royal-gold);
+}
+
+.royal-btn-outline:hover {
+  background: var(--royal-gold);
+  color: var(--royal-black);
+}
+
+/* Royal Input Fields */
+.royal-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: var(--text-royal-primary);
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all var(--transition-royal-smooth);
+  backdrop-filter: blur(10px);
+}
+
+.royal-input:focus {
+  outline: none;
+  border-color: var(--royal-gold);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.royal-input::placeholder {
+  color: var(--text-royal-muted);
+}
+
+/* Royal Navigation */
+.royal-nav {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.royal-nav-item {
+  color: var(--text-royal-secondary);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all var(--transition-royal-smooth);
+  position: relative;
+}
+
+.royal-nav-item::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--royal-gold);
+  transition: all var(--transition-royal-smooth);
+  transform: translateX(-50%);
+}
+
+.royal-nav-item:hover {
+  color: var(--royal-gold);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.royal-nav-item:hover::before,
+.royal-nav-item.active::before {
+  width: 80%;
+}
+
+.royal-nav-item.active {
+  color: var(--royal-gold);
+  background: rgba(251, 191, 36, 0.15);
+}
+
+/* Royal Stats Cards */
+.royal-stat-card {
+  background: var(--glass-royal);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-royal-border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  transition: all var(--transition-royal-bounce);
+  position: relative;
+  overflow: hidden;
+}
+
+.royal-stat-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--royal-gold) 90deg,
+    transparent 90deg,
+    transparent 180deg,
+    var(--royal-purple) 270deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  animation: royalRotate 4s linear infinite;
+  opacity: 0;
+  transition: opacity var(--transition-royal-smooth);
+}
+
+.royal-stat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-royal-large), var(--shadow-royal-purple-glow);
+}
+
+.royal-stat-card:hover::after {
+  opacity: 0.1;
+}
+
+@keyframes royalRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.royal-stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--gradient-royal-secondary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+
+.royal-stat-label {
+  color: var(--text-royal-secondary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Royal Tables */
+.royal-table {
+  background: var(--glass-royal);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-royal-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-royal-medium);
+}
+
+.royal-table th {
+  background: var(--gradient-royal-primary);
+  color: var(--text-royal-primary);
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+.royal-table td {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background var(--transition-royal-fast);
+}
+
+.royal-table tr:hover td {
+  background: rgba(251, 191, 36, 0.05);
+}
+
+/* Royal Progress Bars */
+.royal-progress {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  height: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.royal-progress-bar {
+  height: 100%;
+  background: var(--gradient-royal-secondary);
+  border-radius: 8px;
+  transition: width var(--transition-royal-bounce);
+  position: relative;
+  overflow: hidden;
+}
+
+.royal-progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: royalShimmer 2s infinite;
+}
+
+@keyframes royalShimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Royal Badges */
+.royal-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--gradient-royal-primary);
+  color: var(--text-royal-primary);
+  border: 1px solid var(--royal-purple);
+  transition: all var(--transition-royal-smooth);
+}
+
+.royal-badge:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-royal-glow);
+}
+
+.royal-badge-gold {
+  background: var(--gradient-royal-secondary);
+  border-color: var(--royal-gold);
+}
+
+/* Royal Loading Spinner */
+.royal-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(251, 191, 36, 0.2);
+  border-top: 3px solid var(--royal-gold);
+  border-radius: 50%;
+  animation: royalSpin 1s linear infinite;
+}
+
+@keyframes royalSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Royal Modal */
+.royal-modal {
+  background: var(--royal-black);
+  border: 1px solid var(--royal-gold);
+  border-radius: 16px;
+  box-shadow: var(--shadow-royal-large), var(--shadow-royal-glow);
+  backdrop-filter: blur(20px);
+  animation: royalModalSlideIn var(--transition-royal-bounce);
+}
+
+@keyframes royalModalSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Royal Form Elements */
+.royal-form-group {
+  margin-bottom: 20px;
+}
+
+.royal-form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--royal-gold);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+/* Royal Alerts */
+.royal-alert {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid var(--royal-gold);
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--royal-gold);
+  margin-bottom: 16px;
+  animation: royalAlertSlideIn var(--transition-royal-bounce);
+}
+
+@keyframes royalAlertSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Royal Hover Effects */
+.royal-hover-lift {
+  transition: all var(--transition-royal-smooth);
+}
+
+.royal-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-royal-large), var(--shadow-royal-glow);
+}
+
+/* Royal Pulse Animation */
+.royal-pulse {
+  animation: royalPulseAnimation 2s infinite;
+}
+
+@keyframes royalPulseAnimation {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+/* Royal Glow Effects */
+.royal-glow-on-hover {
+  transition: all var(--transition-royal-smooth);
+}
+
+.royal-glow-on-hover:hover {
+  box-shadow: var(--shadow-royal-glow);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .royal-card {
+    padding: 16px;
+  }
+  
+  .royal-stat-number {
+    font-size: 2rem;
+  }
+  
+  .royal-nav {
+    padding: 12px 0;
+  }
+}
