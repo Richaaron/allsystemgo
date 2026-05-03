@@ -6,7 +6,7 @@ import postgres from 'postgres';
 import * as schema from './schema';
 
 // Create PostgreSQL client
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/nigerian_school_management';
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/postgres';
 
 // Configure postgres client for production
 const client = postgres(connectionString, {

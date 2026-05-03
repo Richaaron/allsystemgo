@@ -8,7 +8,7 @@ export default defineConfig({
   out: './migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/nigerian_school_management'
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/postgres'
   },
   verbose: true,
   strict: true

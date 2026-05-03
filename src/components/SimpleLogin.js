@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './SimpleLogin.css';
+import apiService from '../services/apiService';
 
 // Helper functions for role management
 const getRoleDisplayName = (role) => {
@@ -115,25 +116,25 @@ const SimpleLogin = ({ onLogin }) => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Real API call to backend
+      const response = await apiService.login(formData.username, formData.password, formData.role);
       
-      // Mock authentication - accept any credentials for demo
+      // Transform user data to match expected format
       const userData = {
-        id: 1,
+        id: response.user.id,
         username: formData.username,
-        name: getRoleDisplayName(formData.role),
-        role: formData.role,
-        email: formData.username + '@folushovictory.sch.ng',
-        department: getRoleDepartment(formData.role),
+        name: response.user.email, // Use email as name for now
+        role: response.user.role,
+        email: response.user.email,
+        department: 'Administration', // Default department
         permissions: getRolePermissions(formData.role)
       };
       
-      onLogin(userData, 'mock-token-' + Date.now());
+      onLogin(userData, response.token);
       
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({ general: 'Login failed. Please try again.' });
+      setErrors({ general: error.message || 'Login failed. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
