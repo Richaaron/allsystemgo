@@ -712,9 +712,24 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// Trust proxy for Render
+app.set('trust proxy', true);
+
+// Handle Render-specific headers
+app.use((req, res, next) => {
+  // Allow Render host
+  if (req.headers.host && req.headers.host.includes('.onrender.com')) {
+    next();
+  } else {
+    next();
+  }
+});
+
 // Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🏫 Folusho Victory Schools API Server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔐 Login endpoint: http://localhost:${PORT}/api/auth/login`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
