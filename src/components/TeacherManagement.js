@@ -12,14 +12,10 @@ const TeacherManagement = () => {
     lastName: '',
     email: '',
     phone: '',
-    dateOfBirth: '',
     gender: '',
-    address: '',
     department: '',
     role: '',
-    qualifications: [],
     subjects: [],
-    employmentDate: new Date().toISOString().split('T')[0],
     status: 'active'
   });
   const [errors, setErrors] = useState({});
@@ -37,11 +33,6 @@ const TeacherManagement = () => {
   // Available departments
   const departments = [
     'Pre Nursery', 'Nursery', 'Primary', 'Secondary'
-  ];
-
-  // Available qualifications
-  const qualifications = [
-    'B.Ed', 'B.Sc Education', 'M.Ed', 'PhD', 'NCE', 'PGDE', 'B.Sc', 'M.Sc'
   ];
 
   // Available subjects
@@ -180,17 +171,6 @@ const TeacherManagement = () => {
     }
   };
 
-  const handleQualificationToggle = (qualification) => {
-    setFormData(prev => {
-      const qualifications = prev.qualifications;
-      if (qualifications.includes(qualification)) {
-        return { ...prev, qualifications: qualifications.filter(q => q !== qualification) };
-      } else {
-        return { ...prev, qualifications: [...qualifications, qualification] };
-      }
-    });
-  };
-
   const handleSubjectToggle = (subject) => {
     setFormData(prev => {
       const subjects = prev.subjects;
@@ -209,12 +189,9 @@ const TeacherManagement = () => {
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
     if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
     if (!formData.department) newErrors.department = 'Department is required';
     if (!formData.role) newErrors.role = 'Role is required';
-    if (formData.qualifications.length === 0) newErrors.qualifications = 'At least one qualification is required';
     if (formData.subjects.length === 0) newErrors.subjects = 'At least one subject is required';
     
     // Email validation
@@ -275,14 +252,10 @@ const TeacherManagement = () => {
         lastName: '',
         email: '',
         phone: '',
-        dateOfBirth: '',
         gender: '',
-        address: '',
         department: '',
         role: '',
-        qualifications: [],
         subjects: [],
-        employmentDate: new Date().toISOString().split('T')[0],
         status: 'active'
       });
       setEditingTeacher(null);
@@ -495,18 +468,6 @@ const TeacherManagement = () => {
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Date of Birth *</label>
-                      <input
-                        type="date"
-                        name="dateOfBirth"
-                        value={formData.dateOfBirth}
-                        onChange={handleInputChange}
-                        className={errors.dateOfBirth ? 'error' : ''}
-                      />
-                      {errors.dateOfBirth && <span className="error-message">{errors.dateOfBirth}</span>}
-                    </div>
-
-                    <div className="form-group">
                       <label>Gender *</label>
                       <select
                         name="gender"
@@ -522,19 +483,7 @@ const TeacherManagement = () => {
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                      <label>Address *</label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        className={errors.address ? 'error' : ''}
-                      />
-                      {errors.address && <span className="error-message">{errors.address}</span>}
-                    </div>
-                  </div>
+
                 </div>
 
                 <div className="form-section">
@@ -577,16 +526,6 @@ const TeacherManagement = () => {
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Employment Date</label>
-                      <input
-                        type="date"
-                        name="employmentDate"
-                        value={formData.employmentDate}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div className="form-group">
                       <label>Status</label>
                       <select
                         name="status"
@@ -600,24 +539,7 @@ const TeacherManagement = () => {
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                      <label>Qualifications *</label>
-                      <div className="checkbox-grid">
-                        {qualifications.map(qualification => (
-                          <label key={qualification} className="checkbox-label">
-                            <input
-                              type="checkbox"
-                              checked={formData.qualifications.includes(qualification)}
-                              onChange={() => handleQualificationToggle(qualification)}
-                            />
-                            <span>{qualification}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {errors.qualifications && <span className="error-message">{errors.qualifications}</span>}
-                    </div>
-                  </div>
+
 
                   <div className="form-row">
                     <div className="form-group" style={{ gridColumn: '1 / -1' }}>
