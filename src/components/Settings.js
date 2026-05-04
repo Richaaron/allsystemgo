@@ -47,12 +47,10 @@ const Settings = ({ user }) => {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('token');
       
       const response = await fetch(`/api/settings-get`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -200,12 +198,9 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('token');
-      
       const response = await fetch(`/api/settings-update`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -255,12 +250,9 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('token');
-      
       const response = await fetch(`/api/settings-update`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

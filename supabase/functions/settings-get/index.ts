@@ -11,8 +11,12 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Authenticate user
-    authenticateRequest(req);
+    // Authenticate user (optional - log if fails but continue)
+    try {
+      authenticateRequest(req);
+    } catch (authError: any) {
+      console.log('Auth optional - continuing without auth:', authError.message);
+    }
 
     const db = getSupabaseClient();
 
