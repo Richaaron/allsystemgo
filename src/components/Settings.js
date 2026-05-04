@@ -4,6 +4,7 @@ import './Settings.css';
 const Settings = ({ user }) => {
   const [activeTab, setActiveTab] = useState(user.role === 'admin' ? 'result-settings' : 'password');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState({});
 
@@ -14,10 +15,21 @@ const Settings = ({ user }) => {
     confirmPassword: ''
   });
 
+  // School profile state
+  const [schoolProfile, setSchoolProfile] = useState({
+    schoolName: 'Folusho Victory Schools',
+    schoolEmail: 'info@folushovictory.com',
+    schoolPhone: '+234-800-000-0000',
+    schoolAddress: 'Kaduna, Kaduna State',
+    schoolMotto: 'Excellence in Education Since 2009'
+  });
+
   // Admin result settings state
   const [resultSettings, setResultSettings] = useState({
     principalName: '',
+    principalTitle: 'Principal',
     proprietressName: '',
+    proprietressTitle: 'Proprietress',
     schoolMotto: 'Excellence in Education',
     resultHeader: 'FOLUSHO VICTORY SCHOOLS',
     resultFooter: 'Approved by the Ministry of Education',
@@ -28,11 +40,62 @@ const Settings = ({ user }) => {
 
   // Load saved settings on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('resultSettings');
-    if (savedSettings) {
-      setResultSettings(JSON.parse(savedSettings));
-    }
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/settings', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Convert snake_case from API to camelCase for state
+        setResultSettings({
+          principalName: data.principal_name || '',
+          principalTitle: data.principal_title || 'Principal',
+          proprietressName: data.proprietress_name || '',
+          proprietressTitle: data.proprietress_title || 'Proprietress',
+          schoolMotto: data.school_motto || 'Excellence in Education Since 2009',
+          resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
+          resultFooter: data.result_footer || 'Approved by the Ministry of Education',
+          showGrades: data.show_grades !== false,
+          showPositions: data.show_positions !== false,
+          showRemarks: data.show_remarks !== false
+        });
+
+        setSchoolProfile({
+          schoolName: 'Folusho Victory Schools',
+          schoolEmail: data.school_email || 'info@folushovictory.com',
+          schoolPhone: data.school_phone || '+234-800-000-0000',
+          schoolAddress: data.school_address || 'Kaduna, Kaduna State',
+          schoolMotto: data.school_motto || 'Excellence in Education Since 2009'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      // Fall back to localStorage if API fails
+      const savedSettings = localStorage.getItem('resultSettings');
+      if (savedSettings) {
+        setResultSettings(JSON.parse(savedSettings));
+      }
+      const savedProfile = localStorage.getItem('schoolProfile');
+      if (savedProfile) {
+        setSchoolProfile(JSON.parse(savedProfile));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -63,23 +126,79 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const token = localStorage.getItem('token');
       
-      // Mock password validation (in real app, this would validate against backend)
-      if (passwordData.currentPassword === 'admin123' || passwordData.currentPassword === 'teacher123') {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
         setSuccessMessage('Password changed successfully!');
         setPasswordData({
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
         });
+        
+        // Clear message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        setErrors({ currentPassword: 'Current password is incorrect' });
+        setErrors({ currentPassword: data.error || 'Failed to change password' });
       }
     } catch (error) {
       console.error('Password change error:', error);
       setErrors({ general: 'Failed to change password. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSchoolProfileSave = async (e) => {
+    e.preventDefault();
+    setErrors({});
+    setSuccessMessage('');
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          school_email: schoolProfile.schoolEmail,
+          school_phone: schoolProfile.schoolPhone,
+          school_address: schoolProfile.schoolAddress,
+          school_motto: schoolProfile.schoolMotto
+        })
+      });
+
+      if (response.ok) {
+        // Also save to localStorage for offline access
+        localStorage.setItem('schoolProfile', JSON.stringify(schoolProfile));
+        
+        setSuccessMessage('School profile saved successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        setErrors({ general: 'Failed to save school profile. Please try again.' });
+      }
+    } catch (error) {
+      console.error('School profile save error:', error);
+      setErrors({ general: 'Failed to save school profile. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -107,13 +226,37 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = localStorage.getItem('token');
       
-      // Save to localStorage (in real app, this would save to backend)
-      localStorage.setItem('resultSettings', JSON.stringify(resultSettings));
-      
-      setSuccessMessage('Result settings saved successfully!');
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          principal_name: resultSettings.principalName,
+          principal_title: resultSettings.principalTitle,
+          proprietress_name: resultSettings.proprietressName,
+          proprietress_title: resultSettings.proprietressTitle,
+          school_motto: resultSettings.schoolMotto,
+          result_header: resultSettings.resultHeader,
+          result_footer: resultSettings.resultFooter,
+          show_grades: resultSettings.showGrades,
+          show_positions: resultSettings.showPositions,
+          show_remarks: resultSettings.showRemarks
+        })
+      });
+
+      if (response.ok) {
+        // Also save to localStorage for offline access
+        localStorage.setItem('resultSettings', JSON.stringify(resultSettings));
+        
+        setSuccessMessage('Result settings saved successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        setErrors({ general: 'Failed to save settings. Please try again.' });
+      }
     } catch (error) {
       console.error('Settings save error:', error);
       setErrors({ general: 'Failed to save settings. Please try again.' });
@@ -138,6 +281,16 @@ const Settings = ({ user }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleSchoolProfileInputChange = (e) => {
+    const { name, value } = e.target;
+    setSchoolProfile(prev => ({ ...prev, [name]: value }));
     
     // Clear error for this field
     if (errors[name]) {
@@ -315,33 +468,74 @@ const Settings = ({ user }) => {
       </form>
 
       <div className="preview-section">
-        <h4>Result Preview</h4>
+        <h4>Result Signature Preview</h4>
         <div className="result-preview">
-          <div className="preview-header">
-            <h4>{resultSettings.resultHeader}</h4>
-            <p>{resultSettings.schoolMotto}</p>
-          </div>
-          <div className="preview-content">
-            <div className="preview-marks">
-              <p>English Language: A1</p>
-              <p>Mathematics: B2</p>
-              <p>Science: B3</p>
-            </div>
-            <div className="preview-signatures">
-              <div className="signature-block">
-                <p>_________________________</p>
-                <p><strong>{resultSettings.principalName || 'Principal Name'}</strong></p>
-                <p>Principal</p>
+          <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+            {/* Principal Signature Preview */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                border: '2px dashed #1f2937',
+                borderRadius: '8px',
+                padding: '20px 15px',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05))'
+              }}>
+                <div style={{
+                  borderTop: '3px solid #1f2937',
+                  width: '120px',
+                  margin: '0 auto 12px',
+                  paddingTop: '8px'
+                }}>
+                  <div style={{
+                    fontSize: '22px',
+                    fontStyle: 'italic',
+                    fontWeight: 'bold',
+                    color: '#1f2937',
+                    fontFamily: 'Brush Script MT, cursive, serif'
+                  }}>
+                    {resultSettings.principalName ? resultSettings.principalName.split(' ')[0] : 'Sig'}
+                  </div>
+                </div>
+                <p style={{ margin: '6px 0 3px 0', fontWeight: 'bold', fontSize: '12px', color: '#1f2937' }}>
+                  {resultSettings.principalName || 'Principal Name'}
+                </p>
+                <p style={{ margin: '0px', fontSize: '11px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Principal
+                </p>
               </div>
-              <div className="signature-block">
-                <p>_________________________</p>
-                <p><strong>{resultSettings.proprietressName || 'Proprietress Name'}</strong></p>
-                <p>Proprietress</p>
+            </div>
+
+            {/* Proprietress Signature Preview */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                border: '2px dashed #1f2937',
+                borderRadius: '8px',
+                padding: '20px 15px',
+                background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(168, 85, 247, 0.05))'
+              }}>
+                <div style={{
+                  borderTop: '3px solid #1f2937',
+                  width: '120px',
+                  margin: '0 auto 12px',
+                  paddingTop: '8px'
+                }}>
+                  <div style={{
+                    fontSize: '22px',
+                    fontStyle: 'italic',
+                    fontWeight: 'bold',
+                    color: '#1f2937',
+                    fontFamily: 'Brush Script MT, cursive, serif'
+                  }}>
+                    {resultSettings.proprietressName ? resultSettings.proprietressName.split(' ')[0] : 'Sig'}
+                  </div>
+                </div>
+                <p style={{ margin: '6px 0 3px 0', fontWeight: 'bold', fontSize: '12px', color: '#1f2937' }}>
+                  {resultSettings.proprietressName || 'Proprietress Name'}
+                </p>
+                <p style={{ margin: '0px', fontSize: '11px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Proprietress
+                </p>
               </div>
             </div>
-          </div>
-          <div className="preview-footer">
-            <p>{resultSettings.resultFooter}</p>
           </div>
         </div>
       </div>
@@ -380,22 +574,30 @@ const Settings = ({ user }) => {
         </div>
       </div>
 
-      {successMessage && (
+      {isLoading && (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <p>Loading settings...</p>
+        </div>
+      )}
+
+      {successMessage && !isLoading && (
         <div className="success-message">
           ✅ {successMessage}
         </div>
       )}
 
-      {errors.general && (
+      {errors.general && !isLoading && (
         <div className="error-message general">
           ❌ {errors.general}
         </div>
       )}
 
-      <div className="settings-content">
-        {user.role === 'admin' && activeTab === 'result-settings' && renderResultSettingsTab()}
-        {activeTab === 'password' && renderPasswordTab()}
-      </div>
+      {!isLoading && (
+        <div className="settings-content">
+          {user.role === 'admin' && activeTab === 'result-settings' && renderResultSettingsTab()}
+          {activeTab === 'password' && renderPasswordTab()}
+        </div>
+      )}
     </div>
   );
 };

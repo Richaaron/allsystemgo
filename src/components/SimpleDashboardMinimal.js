@@ -3,6 +3,7 @@ import ResultsNigerian from './ResultsNigerian';
 import StudentClean from './StudentClean';
 import TeacherClean from './TeacherClean';
 import ClassesClean from './ClassesClean';
+import Settings from './Settings';
 
 const SimpleDashboardMinimal = ({ user, onLogout }) => {
   const [activeMenu, setActiveMenu] = useState('overview');
@@ -56,6 +57,8 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
         return <TeacherClean />;
       case 'classes':
         return <ClassesClean />;
+      case 'settings':
+        return <Settings user={user} />;
       default:
         return (
           <div style={{ padding: '20px' }}>
@@ -71,7 +74,8 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
     { id: 'results', label: 'Results', icon: '📝' },
     { id: 'students', label: 'Students', icon: '🎓' },
     { id: 'teachers', label: 'Teachers', icon: '👥' },
-    { id: 'classes', label: 'Classes', icon: '🏫' }
+    { id: 'classes', label: 'Classes', icon: '🏫' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
   return (

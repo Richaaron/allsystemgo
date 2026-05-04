@@ -7,6 +7,13 @@ const ResultsNigerian = ({ user }) => {
   const [term, setTerm] = useState('Second Term');
   const [results, setResults] = useState([]);
   const [formData, setFormData] = useState({});
+  const [resultSettings, setResultSettings] = useState({
+    principalName: '',
+    proprietressName: '',
+    resultHeader: 'FOLUSHO VICTORY SCHOOLS',
+    resultFooter: 'Approved by the Ministry of Education'
+  });
+  const [printingResultId, setPrintingResultId] = useState(null);
 
   // Sample students with their registered subjects
   const sampleStudents = [
@@ -91,7 +98,47 @@ const ResultsNigerian = ({ user }) => {
   useEffect(() => {
     setStudents(sampleStudents);
     setResults(sampleResults);
+    
+    // Load result settings from API or localStorage
+    loadResultSettings();
   }, []);
+
+  const loadResultSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/settings', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setResultSettings({
+          principalName: data.principal_name || '',
+          proprietressName: data.proprietress_name || '',
+          resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
+          resultFooter: data.result_footer || 'Approved by the Ministry of Education'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading result settings:', error);
+      // Try localStorage as fallback
+      const savedSettings = localStorage.getItem('resultSettings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        setResultSettings({
+          principalName: parsed.principalName || '',
+          proprietressName: parsed.proprietressName || '',
+          resultHeader: parsed.resultHeader || 'FOLUSHO VICTORY SCHOOLS',
+          resultFooter: parsed.resultFooter || 'Approved by the Ministry of Education'
+        });
+      }
+    }
+  };
 
   const getGrade = (score) => {
     if (score >= 80) return 'A';
@@ -130,6 +177,56 @@ const ResultsNigerian = ({ user }) => {
     
     setFormData(initialFormData);
     setShowForm(true);
+  };
+
+  // Convert number to ordinal format (1st, 2nd, 3rd, etc.)
+  const getPositionOrdinal = (position) => {
+    if (position === 1) return '1st';
+    if (position === 2) return '2nd';
+    if (position === 3) return '3rd';
+    return `${position}th`;
+  };
+
+  // Calculate position based on class and term performance
+  const calculatePosition = (newResult, allResults) => {
+    // Get all results for same class and term (including the new one)
+    const classResults = [
+      ...allResults.filter(
+        r => r.studentClass === newResult.studentClass && r.term === newResult.term
+      ),
+      newResult
+    ];
+
+    // Sort by overall average (highest first)
+    const sorted = [...classResults].sort((a, b) => 
+      b.overallAverage - a.overallAverage
+    );
+
+    // Find position of current student
+    const position = sorted.findIndex(r => r.studentId === newResult.studentId) + 1;
+    const totalStudents = sorted.length;
+
+    return { position, totalStudents, positionText: getPositionOrdinal(position) };
+  };
+
+  // Calculate all positions for a class (for display)
+  const getPositionsForClass = (studentClass, termValue) => {
+    const classResults = results.filter(
+      r => r.studentClass === studentClass && r.term === termValue
+    );
+
+    // Sort by overall average (highest first)
+    const sorted = [...classResults].sort((a, b) => 
+      b.overallAverage - a.overallAverage
+    );
+
+    // Add position to each result
+    return sorted.map((result, index) => ({
+      ...result,
+      position: index + 1,
+      positionText: getPositionOrdinal(index + 1),
+      totalStudents: sorted.length
+    }));
   };
 
   // Calculate total and grade for a subject
@@ -213,7 +310,28 @@ const ResultsNigerian = ({ user }) => {
       status: 'draft'
     };
 
-    setResults([...results, newResult]);
+    // Calculate position for this student
+    const { position, totalStudents, positionText } = calculatePosition(newResult, results);
+    newResult.position = position;
+    newResult.totalStudents = totalStudents;
+    newResult.positionText = positionText;
+
+    const updatedResults = [...results, newResult];
+    
+    // Recalculate positions for all students in this class/term
+    const classResults = updatedResults.filter(
+      r => r.studentClass === selectedStudent.studentClass && r.term === term
+    );
+    
+    classResults.forEach((result, index) => {
+      const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
+      const posIndex = sorted.findIndex(r => r.id === result.id);
+      result.position = posIndex + 1;
+      result.totalStudents = sorted.length;
+      result.positionText = getPositionOrdinal(posIndex + 1);
+    });
+
+    setResults(updatedResults);
     setShowForm(false);
     setSelectedStudent(null);
     setFormData({});
@@ -248,6 +366,316 @@ const ResultsNigerian = ({ user }) => {
 
   const filteredResults = getFilteredResults();
   const overallScores = calculateOverallScores();
+
+  // Render print view for a result
+  const renderPrintView = (result) => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        background: 'white',
+        color: '#1f2937',
+        padding: '40px',
+        borderRadius: '8px',
+        width: '90%',
+        maxWidth: '900px',
+        maxHeight: '90vh',
+        overflow: 'auto'
+      }}>
+        {/* Close Button */}
+        <button
+          onClick={() => setPrintingResultId(null)}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            background: '#ef4444',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            cursor: 'pointer',
+            fontSize: '20px',
+            fontWeight: 'bold'
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Print Header */}
+        <div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '3px solid #1f2937', paddingBottom: '20px' }}>
+          <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: 'bold' }}>
+            {resultSettings.resultHeader}
+          </h2>
+          <p style={{ margin: '5px 0', fontSize: '14px', fontStyle: 'italic' }}>
+            Academic Result Slip
+          </p>
+        </div>
+
+        {/* Student Information */}
+        <div style={{ marginBottom: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+          <div>
+            <p style={{ margin: '5px 0', fontSize: '14px' }}>
+              <strong>Student Name:</strong> {result.studentName}
+            </p>
+            <p style={{ margin: '5px 0', fontSize: '14px' }}>
+              <strong>Class:</strong> {result.studentClass}
+            </p>
+          </div>
+          <div>
+            <p style={{ margin: '5px 0', fontSize: '14px' }}>
+              <strong>Term:</strong> {result.term}
+            </p>
+            <p style={{ margin: '5px 0', fontSize: '14px' }}>
+              <strong>Date:</strong> {new Date().toLocaleDateString()}
+            </p>
+          </div>
+          <div style={{ textAlign: 'center', backgroundColor: '#fef3c7', padding: '15px', borderRadius: '6px' }}>
+            <p style={{ margin: '5px 0', fontSize: '12px', color: '#92400e' }}>
+              <strong>Class Position</strong>
+            </p>
+            <p style={{ margin: '5px 0', fontSize: '28px', fontWeight: 'bold', color: '#d97706' }}>
+              {(() => {
+                const classResults = results.filter(
+                  r => r.studentClass === result.studentClass && r.term === result.term
+                );
+                const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
+                const position = sorted.findIndex(r => r.id === result.id) + 1;
+                return `${getPositionOrdinal(position)}`;
+              })()}
+            </p>
+            <p style={{ margin: '5px 0', fontSize: '12px', color: '#92400e' }}>
+              out of {(() => {
+                const classResults = results.filter(
+                  r => r.studentClass === result.studentClass && r.term === result.term
+                );
+                return classResults.length;
+              })()}
+            </p>
+          </div>
+        </div>
+
+        {/* Results Table */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '30px' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #1f2937' }}>
+              <th style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>Subject</th>
+              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>CA1</th>
+              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>CA2</th>
+              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>Exam</th>
+              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>Total</th>
+              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.subjects.map((subject, idx) => (
+              <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                <td style={{ padding: '10px', textAlign: 'left' }}>{subject.name}</td>
+                <td style={{ padding: '10px', textAlign: 'center' }}>{subject.ca1}</td>
+                <td style={{ padding: '10px', textAlign: 'center' }}>{subject.ca2}</td>
+                <td style={{ padding: '10px', textAlign: 'center' }}>{subject.exam}</td>
+                <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>{subject.total}</td>
+                <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#ef4444' }}>
+                  {subject.grade}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Overall Summary */}
+        <div style={{ 
+          background: '#f3f4f6', 
+          padding: '15px', 
+          borderRadius: '6px', 
+          marginBottom: '30px',
+          textAlign: 'center'
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+            <div>
+              <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
+                <strong>Overall Average:</strong>
+              </p>
+              <p style={{ margin: '5px 0', fontSize: '18px', fontWeight: 'bold', color: '#2563eb' }}>
+                {result.overallAverage.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
+                <strong>Overall Grade:</strong>
+              </p>
+              <p style={{ margin: '5px 0', fontSize: '18px', fontWeight: 'bold', color: '#2563eb' }}>
+                {result.overallGrade}
+              </p>
+            </div>
+            <div>
+              <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
+                <strong>Class Position:</strong>
+              </p>
+              <p style={{ margin: '5px 0', fontSize: '18px', fontWeight: 'bold', color: '#d97706' }}>
+                {(() => {
+                  const classResults = results.filter(
+                    r => r.studentClass === result.studentClass && r.term === result.term
+                  );
+                  const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
+                  const position = sorted.findIndex(r => r.id === result.id) + 1;
+                  return `${getPositionOrdinal(position)} of ${sorted.length}`;
+                })()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Signatures Section */}
+        <div style={{ marginTop: '60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+          {/* Principal Signature */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              border: '2px dashed #1f2937',
+              borderRadius: '8px',
+              padding: '30px 20px',
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05))',
+              position: 'relative',
+              marginBottom: '15px'
+            }}>
+              {/* Signature Line */}
+              <div style={{
+                borderTop: '3px solid #1f2937',
+                width: '140px',
+                margin: '0 auto 15px',
+                paddingTop: '10px'
+              }}>
+                <div style={{
+                  fontSize: '28px',
+                  fontStyle: 'italic',
+                  fontWeight: 'bold',
+                  color: '#1f2937',
+                  letterSpacing: '2px',
+                  fontFamily: 'Brush Script MT, cursive, serif',
+                  lineHeight: '1.2'
+                }}>
+                  {resultSettings.principalName ? resultSettings.principalName.split(' ')[0] : 'Signature'}
+                </div>
+              </div>
+              
+              {/* Title and Name */}
+              <p style={{ margin: '8px 0 4px 0, fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>
+                {resultSettings.principalName || 'Principal Name'}
+              </p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Principal
+              </p>
+              
+              {/* Date */}
+              <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#9ca3af' }}>
+                Date: _________________
+              </p>
+            </div>
+          </div>
+
+          {/* Proprietress Signature */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              border: '2px dashed #1f2937',
+              borderRadius: '8px',
+              padding: '30px 20px',
+              background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(168, 85, 247, 0.05))',
+              position: 'relative',
+              marginBottom: '15px'
+            }}>
+              {/* Signature Line */}
+              <div style={{
+                borderTop: '3px solid #1f2937',
+                width: '140px',
+                margin: '0 auto 15px',
+                paddingTop: '10px'
+              }}>
+                <div style={{
+                  fontSize: '28px',
+                  fontStyle: 'italic',
+                  fontWeight: 'bold',
+                  color: '#1f2937',
+                  letterSpacing: '2px',
+                  fontFamily: 'Brush Script MT, cursive, serif',
+                  lineHeight: '1.2'
+                }}>
+                  {resultSettings.proprietressName ? resultSettings.proprietressName.split(' ')[0] : 'Signature'}
+                </div>
+              </div>
+              
+              {/* Title and Name */}
+              <p style={{ margin: '8px 0 4px 0', fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>
+                {resultSettings.proprietressName || 'Proprietress Name'}
+              </p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Proprietress
+              </p>
+              
+              {/* Date */}
+              <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#9ca3af' }}>
+                Date: _________________
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '30px',
+          paddingTop: '20px',
+          borderTop: '2px solid #1f2937',
+          fontSize: '12px',
+          color: '#666'
+        }}>
+          <p style={{ margin: '5px 0' }}>{resultSettings.resultFooter}</p>
+        </div>
+
+        {/* Print Button */}
+        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+          <button
+            onClick={() => window.print()}
+            style={{
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              marginRight: '10px',
+              fontSize: '14px'
+            }}
+          >
+            🖨️ Print
+          </button>
+          <button
+            onClick={() => setPrintingResultId(null)}
+            style={{
+              background: '#6b7280',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ padding: '20px' }}>
@@ -575,52 +1003,84 @@ const ResultsNigerian = ({ user }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: 'rgba(51, 65, 85, 0.8)' }}>
+              <th style={{ padding: '12px', textAlign: 'center', color: '#e2e8f0' }}>Position</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Student</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Class</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Term</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Average</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Grade</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Status</th>
+              <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredResults.map(result => (
-              <tr key={result.id} style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)' }}>
-                <td style={{ padding: '12px', color: '#e2e8f0' }}>{result.studentName}</td>
-                <td style={{ padding: '12px', color: '#94a3b8' }}>{result.studentClass}</td>
-                <td style={{ padding: '12px', color: '#94a3b8' }}>{result.term}</td>
-                <td style={{ padding: '12px', color: '#e2e8f0', fontWeight: '600' }}>
-                  {result.overallAverage.toFixed(1)}
-                </td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: '600',
-                    color: 'white',
-                    backgroundColor: getGradeColor(result.overallGrade)
-                  }}>
-                    {result.overallGrade}
-                  </span>
-                </td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: '600',
-                    color: result.status === 'published' ? '#22c55e' : '#94a3b8',
-                    backgroundColor: result.status === 'published' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(148, 163, 184, 0.2)',
-                    border: `1px solid ${result.status === 'published' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(148, 163, 184, 0.3)'}`
-                  }}>
-                    {result.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {filteredResults.map((result, idx) => {
+              // Recalculate position dynamically for display
+              const classResults = results.filter(
+                r => r.studentClass === result.studentClass && r.term === result.term
+              );
+              const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
+              const position = sorted.findIndex(r => r.id === result.id) + 1;
+              const positionText = getPositionOrdinal(position);
+
+              return (
+                <tr key={result.id} style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)' }}>
+                  <td style={{ padding: '12px', textAlign: 'center', color: '#60a5fa', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                    🏆 {positionText}
+                  </td>
+                  <td style={{ padding: '12px', color: '#e2e8f0' }}>{result.studentName}</td>
+                  <td style={{ padding: '12px', color: '#94a3b8' }}>{result.studentClass}</td>
+                  <td style={{ padding: '12px', color: '#94a3b8' }}>{result.term}</td>
+                  <td style={{ padding: '12px', color: '#e2e8f0', fontWeight: '600' }}>
+                    {result.overallAverage.toFixed(1)}
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      color: 'white',
+                      backgroundColor: getGradeColor(result.overallGrade)
+                    }}>
+                      {result.overallGrade}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      color: result.status === 'published' ? '#22c55e' : '#94a3b8',
+                      backgroundColor: result.status === 'published' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(148, 163, 184, 0.2)',
+                      border: `1px solid ${result.status === 'published' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(148, 163, 184, 0.3)'}`
+                    }}>
+                      {result.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <button
+                      onClick={() => setPrintingResultId(result.id)}
+                      style={{
+                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: '600'
+                      }}
+                    >
+                      📄 Print
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
@@ -630,6 +1090,11 @@ const ResultsNigerian = ({ user }) => {
           </div>
         )}
       </div>
+
+      {/* Print View Modal */}
+      {printingResultId && (
+        renderPrintView(filteredResults.find(r => r.id === printingResultId))
+      )}
     </div>
   );
 };

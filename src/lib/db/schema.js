@@ -152,6 +152,26 @@ const users = pgTable('users', {
   created_at: timestamp('created_at').defaultNow()
 });
 
+// Settings Table for school profile and result customization
+const settings = pgTable('settings', {
+  id: serial('id').primaryKey(),
+  school_id: integer('school_id').references(() => schools.id).notNull().unique(),
+  principal_name: varchar('principal_name', { length: 255 }),
+  principal_title: varchar('principal_title', { length: 100 }).default('Principal'),
+  proprietress_name: varchar('proprietress_name', { length: 255 }),
+  proprietress_title: varchar('proprietress_title', { length: 100 }).default('Proprietress'),
+  school_motto: varchar('school_motto', { length: 255 }),
+  result_header: varchar('result_header', { length: 255 }),
+  result_footer: varchar('result_footer', { length: 255 }),
+  show_grades: boolean('show_grades').default(true),
+  show_positions: boolean('show_positions').default(true),
+  show_remarks: boolean('show_remarks').default(true),
+  school_email: varchar('school_email', { length: 255 }),
+  school_phone: varchar('school_phone', { length: 50 }),
+  school_address: varchar('school_address', { length: 255 }),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
 module.exports = {
   schools,
   academicYears,
@@ -162,5 +182,6 @@ module.exports = {
   teachers,
   students,
   results,
-  users
+  users,
+  settings
 };

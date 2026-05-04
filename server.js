@@ -22,7 +22,8 @@ const {
   teachers,
   students,
   results,
-  users
+  users,
+  settings
 } = schema;
 
 const app = express();
@@ -694,6 +695,161 @@ app.post('/api/email/broadcast', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error sending broadcast:', error);
     res.status(500).json({ error: 'Failed to send broadcast' });
+  }
+});
+
+// ==================== Settings & Profile Endpoints ====================
+
+// Change password endpoint
+app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new passwords are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    // Get user from database
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    if (!user || user.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Compare current password
+    const passwordMatch = await bcrypt.compare(currentPassword, user[0].password);
+    if (!passwordMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
+
+    res.json({ 
+      success: true, 
+      message: 'Password changed successfully' 
+    });
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// Get school settings endpoint
+app.get('/api/settings', authenticateToken, async (req, res) => {
+  try {
+    const schoolId = req.user.school_id || 1;
+
+    const schoolSettings = await db.select().from(settings)
+      .where(eq(settings.school_id, schoolId))
+      .limit(1);
+
+    if (schoolSettings && schoolSettings.length > 0) {
+      res.json(schoolSettings[0]);
+    } else {
+      // Return default settings if none exist
+      res.json({
+        school_id: schoolId,
+        principal_name: '',
+        principal_title: 'Principal',
+        proprietress_name: '',
+        proprietress_title: 'Proprietress',
+        school_motto: 'Excellence in Education Since 2009',
+        result_header: 'FOLUSHO VICTORY SCHOOLS',
+        result_footer: 'Approved by the Ministry of Education',
+        show_grades: true,
+        show_positions: true,
+        show_remarks: true
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+// Update school settings endpoint
+app.put('/api/settings', authenticateToken, async (req, res) => {
+  try {
+    const schoolId = req.user.school_id || 1;
+    const {
+      principal_name,
+      principal_title,
+      proprietress_name,
+      proprietress_title,
+      school_motto,
+      result_header,
+      result_footer,
+      show_grades,
+      show_positions,
+      show_remarks,
+      school_email,
+      school_phone,
+      school_address
+    } = req.body;
+
+    // Check if settings exist
+    const existingSettings = await db.select().from(settings)
+      .where(eq(settings.school_id, schoolId))
+      .limit(1);
+
+    if (existingSettings && existingSettings.length > 0) {
+      // Update existing settings
+      await db.update(settings)
+        .set({
+          principal_name,
+          principal_title,
+          proprietress_name,
+          proprietress_title,
+          school_motto,
+          result_header,
+          result_footer,
+          show_grades,
+          show_positions,
+          show_remarks,
+          school_email,
+          school_phone,
+          school_address,
+          updated_at: new Date()
+        })
+        .where(eq(settings.school_id, schoolId));
+    } else {
+      // Create new settings
+      await db.insert(settings).values({
+        school_id: schoolId,
+        principal_name,
+        principal_title,
+        proprietress_name,
+        proprietress_title,
+        school_motto,
+        result_header,
+        result_footer,
+        show_grades,
+        show_positions,
+        show_remarks,
+        school_email,
+        school_phone,
+        school_address
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Settings updated successfully' 
+    });
+  } catch (error) {
+    console.error('Settings update error:', error);
+    res.status(500).json({ error: 'Failed to update settings' });
   }
 });
 
