@@ -4,7 +4,7 @@
 // Environment variables with fallbacks
 const config = {
   // API Configuration
-  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
+  apiUrl: process.env.REACT_APP_API_URL || 'https://folusho-victory-schools-api.onrender.com/api',
   apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT) || 10000,
   
   // Authentication

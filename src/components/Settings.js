@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
+import config from '../config/envConfig';
 
 const Settings = ({ user }) => {
   const [activeTab, setActiveTab] = useState(user.role === 'admin' ? 'school-profile' : 'password');
@@ -48,7 +49,7 @@ const Settings = ({ user }) => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch(`${config.apiUrl}/settings`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -134,7 +135,7 @@ const Settings = ({ user }) => {
         return;
       }
 
-      const response = await fetch('/api/auth/change-password', {
+      const response = await fetch(`${config.apiUrl}/auth/change-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -201,7 +202,7 @@ const Settings = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch(`${config.apiUrl}/settings`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -256,7 +257,7 @@ const Settings = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch(`${config.apiUrl}/settings`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
