@@ -11,6 +11,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export const supabaseService = {
   // Authentication
   async login(email, password, role) {
+    console.log('🔐 Login attempt with:', { email, password, role });
+    
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -19,8 +21,11 @@ export const supabaseService = {
       .eq('role', role)
       .single()
 
+    console.log('📊 Supabase response:', { data, error });
+
     if (error || !data) {
-      throw new Error('Invalid credentials')
+      console.error('❌ Login failed:', error?.message || 'No user found');
+      throw new Error(error?.message || 'Invalid credentials')
     }
 
     // Update last login

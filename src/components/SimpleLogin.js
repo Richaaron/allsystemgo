@@ -116,8 +116,12 @@ const SimpleLogin = ({ onLogin }) => {
     setIsSubmitting(true);
     
     try {
+      console.log('📝 Form data being sent:', formData);
+      
       // Direct Supabase authentication
       const response = await supabaseService.login(formData.username, formData.password, formData.role);
+      
+      console.log('✅ Login successful, user:', response.user);
       
       // Transform user data to match expected format
       const userData = {
@@ -133,7 +137,7 @@ const SimpleLogin = ({ onLogin }) => {
       onLogin(userData, response.token);
       
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error details:', error);
       setErrors({ general: error.message || 'Login failed. Please try again.' });
     } finally {
       setIsSubmitting(false);
