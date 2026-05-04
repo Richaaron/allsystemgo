@@ -11,13 +11,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Authenticate user (optional - log if fails but continue)
-    try {
-      authenticateRequest(req);
-    } catch (authError: any) {
-      console.log('Auth optional - continuing without auth:', authError.message);
-    }
-
     const updates = await req.json();
 
     if (!updates || Object.keys(updates).length === 0) {
