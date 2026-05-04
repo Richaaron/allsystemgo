@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { supabaseService } from '../services/supabaseService';
 import './SimpleLogin.css';
-import apiService from '../services/apiService';
 
 // Helper functions for role management
 const getRoleDisplayName = (role) => {
@@ -116,8 +116,8 @@ const SimpleLogin = ({ onLogin }) => {
     setIsSubmitting(true);
     
     try {
-      // Real API call to backend
-      const response = await apiService.login(formData.username, formData.password, formData.role);
+      // Direct Supabase authentication
+      const response = await supabaseService.login(formData.username, formData.password, formData.role);
       
       // Transform user data to match expected format
       const userData = {

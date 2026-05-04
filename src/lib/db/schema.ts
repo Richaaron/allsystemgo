@@ -432,13 +432,4 @@ export const systemSettings = pgTable('system_settings', {
   updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// Create indexes for performance
-export const schoolsIndex = index('schools_email_idx').on(schools.email);
-export const studentsIndex = index('students_admission_number_idx').on(students.admissionNumber);
-export const studentsIndex2 = index('students_class_id_idx').on(students.classId);
-export const teachersIndex = index('teachers_staff_id_idx').on(teachers.staffId);
-export const teachersIndex2 = index('teachers_email_idx').on(teachers.email);
-export const resultsIndex = index('results_student_term_idx').on(results.studentId, results.termId);
-export const attendanceIndex = index('attendance_student_date_idx').on(attendance.studentId, attendance.date);
-export const studentFeesIndex = index('student_fees_student_status_idx').on(studentFees.studentId, studentFees.status);
-export const notificationsIndex = index('notifications_recipient_type_idx').on(notifications.recipientType, notifications.isRead);
+// Note: Indexes will be created separately after table creation

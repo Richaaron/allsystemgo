@@ -1,0 +1,37 @@
+services:
+  # Backend API Service
+  - type: web
+    name: folusho-victory-schools-api
+    env: node
+    repo: https://github.com/Richaaron/allsystemgo.git
+    rootDir: ./
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: DATABASE_URL
+        sync: false # Set manually in Render dashboard
+      - key: JWT_SECRET
+        sync: false # Set manually in Render dashboard
+      - key: REACT_APP_SMTP_HOST
+        value: smtp.gmail.com
+      - key: REACT_APP_SMTP_PORT
+        value: 587
+      - key: REACT_APP_SMTP_SECURE
+        value: false
+      - key: REACT_APP_SMTP_USER
+        sync: false # Set manually in Render dashboard
+      - key: REACT_APP_SMTP_PASS
+        sync: false # Set manually in Render dashboard
+
+  # PostgreSQL Database (Optional - can use external service)
+  - type: pserv
+    name: folusho-victory-schools-db
+    plan: free
+    ipAllowList: []
+    databaseName: folusho_victory_schools
+    user: folusho_user
