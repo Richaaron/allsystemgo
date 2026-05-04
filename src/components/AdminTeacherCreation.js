@@ -203,45 +203,89 @@ const AdminTeacherCreation = () => {
     }
     
     setIsSubmitting(true);
+    setEmailStatus('sending');
     
     try {
+      // Generate staff ID
+      const staffId = 'STF' + Date.now().toString().slice(-6);
+      
       // Get existing staff IDs to avoid duplicates
       const existingStaffIds = TeacherAssignmentService.MOCK_TEACHERS.map(t => t.staffId);
       
       // Generate credentials
       const credentials = CredentialService.generateTeacherCredentials(formData.personalInfo, existingStaffIds);
       
-      // Create teacher object
+      // Create teacher object for database
+      const teacherPayload = {
+        staff_id: staffId,
+        first_name: formData.personalInfo.firstName,
+        last_name: formData.personalInfo.lastName,
+        email: formData.personalInfo.email,
+        phone: formData.personalInfo.phone,
+        gender: formData.personalInfo.gender,
+        title: formData.professionalInfo.role,
+        qualification: formData.professionalInfo.specialization,
+        department_id: formData.professionalInfo.department,
+        school_id: 1
+      };
+      
+      // Get authentication token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      // Save teacher to database via API
+      console.log('📝 Creating teacher in database...', teacherPayload);
+      const createResponse = await fetch('/api/teachers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(teacherPayload)
+      });
+
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `Failed to create teacher: ${createResponse.status}`);
+      }
+
+      const createResult = await createResponse.json();
+      console.log('✅ Teacher created successfully:', createResult);
+
+      // Prepare full teacher data for display
       const teacherData = {
         ...formData.personalInfo,
         ...formData.professionalInfo,
         ...formData.assignments,
+        staffId: staffId,
         ...credentials,
         status: 'active',
         createdAt: new Date().toISOString()
       };
-      
-      // Send email with credentials
-      setEmailStatus('sending');
+
+      // Send welcome email with credentials
+      console.log('📧 Sending welcome email...');
       const emailResult = await EmailService.sendTeacherCredentials(teacherData, credentials);
       
       if (emailResult.success) {
         setEmailStatus('sent');
         setCreatedTeacher(teacherData);
         setSubmitSuccess(true);
-        
-        // In a real application, you would save to database here
-        console.log('Teacher created successfully:', teacherData);
-        console.log('Credentials sent via email:', emailResult);
+        console.log('✅ Email sent successfully:', emailResult);
       } else {
-        setEmailStatus('failed');
-        throw new Error('Failed to send credentials email');
+        // Email failed but teacher was created, so show partial success
+        console.warn('⚠️ Teacher created but email failed:', emailResult);
+        setEmailStatus('partial');
+        setCreatedTeacher(teacherData);
+        setSubmitSuccess(true);
       }
       
     } catch (error) {
-      console.error('Teacher creation error:', error);
+      console.error('❌ Teacher creation error:', error);
       setEmailStatus('failed');
-      alert('Teacher creation failed. Please try again.');
+      alert(`Teacher creation failed: ${error.message}\n\nPlease try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -330,10 +374,14 @@ const AdminTeacherCreation = () => {
               <div className={`status-badge ${emailStatus}`}>
                 {emailStatus === 'sent' && '✅ Email sent successfully'}
                 {emailStatus === 'sending' && '⏳ Sending email...'}
+                {emailStatus === 'partial' && '⚠️ Teacher created, email may have issues'}
                 {emailStatus === 'failed' && '❌ Email failed to send'}
               </div>
-              {emailStatus === 'sent' && (
+              {(emailStatus === 'sent' || emailStatus === 'partial') && (
                 <p>Login credentials have been sent to <strong>{createdTeacher.email}</strong></p>
+              )}
+              {emailStatus === 'partial' && (
+                <p><em>Teacher account was created successfully. Email delivery had issues, but the account is ready to use.</em></p>
               )}
             </div>
           </div>

@@ -2,22 +2,41 @@
 
 export class EmailService {
   static async sendTeacherCredentials(teacherData, credentials) {
-    // In a real application, this would integrate with an email service like SendGrid, Nodemailer, etc.
-    // For now, we'll simulate the email sending and return a success response
-    
     const emailContent = this.generateTeacherWelcomeEmail(teacherData, credentials);
     
     try {
-      // Simulate API call to email service
-      console.log('Sending email to:', teacherData.email);
-      console.log('Email content:', emailContent);
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Call Supabase Edge Function via Netlify redirect
+      // The /api/* path is redirected to Supabase Edge Functions by netlify.toml
+      const response = await fetch('/api/email-send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recipient: emailContent.to,
+          subject: emailContent.subject,
+          content: emailContent.html
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Email sent successfully:', result);
+
       return {
         success: true,
-        messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        messageId: result.messageId || `msg_${Date.now()}`,
         timestamp: new Date().toISOString()
       };
     } catch (error) {
