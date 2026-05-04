@@ -13,34 +13,60 @@ export const supabaseService = {
   async login(email, password, role) {
     console.log('🔐 Login attempt with:', { email, password, role });
     
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .eq('role', role)
-      .single()
+    try {
+      // First, try to get the user without .single() to see what we get
+      const { data: allUsers, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email);
 
-    console.log('📊 Supabase response:', { data, error });
+      console.log('📊 All matching users:', allUsers);
 
-    if (error || !data) {
-      console.error('❌ Login failed:', error?.message || 'No user found');
-      throw new Error(error?.message || 'Invalid credentials')
-    }
-
-    // Update last login
-    await supabase
-      .from('users')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', data.id)
-
-    return {
-      token: 'dummy-jwt-token', // In production, use real JWT
-      user: {
-        id: data.id,
-        email: data.email,
-        role: data.role
+      if (fetchError) {
+        console.error('❌ Fetch error:', fetchError);
+        throw new Error(fetchError.message);
       }
+
+      if (!allUsers || allUsers.length === 0) {
+        console.error('❌ No user found with email:', email);
+        throw new Error('User not found');
+      }
+
+      const user = allUsers[0];
+      console.log('👤 User found:', user);
+
+      // Check password
+      if (user.password !== password) {
+        console.error('❌ Password mismatch');
+        throw new Error('Invalid password');
+      }
+
+      // Check role
+      if (user.role !== role) {
+        console.error('❌ Role mismatch. Expected:', role, 'Got:', user.role);
+        throw new Error(`Role mismatch. User role is "${user.role}" but you selected "${role}"`);
+      }
+
+      console.log('✅ Login successful for user:', user.email);
+
+      // Update last login
+      await supabase
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id);
+
+      return {
+        token: 'dummy-jwt-token',
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Login error:', error.message);
+      throw new Error(error.message || 'Invalid credentials');
     }
   },
 
