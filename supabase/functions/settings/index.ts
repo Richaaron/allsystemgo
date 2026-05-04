@@ -1,28 +1,51 @@
-// Settings endpoint - GET and PUT
-import { getSupabaseClient, successResponse, errorResponse, corsHeaders, handleCors } from './utils.ts';
+// @supabase-disable-jwt
+// Settings endpoint - GET and PUT (no authentication required)
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+};
+
+function getSupabaseClient() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase credentials');
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+}
+
+function successResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+  });
+}
+
+function errorResponse(message: string, status = 400) {
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+  );
+}
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
 
   try {
-    // Get school ID from token or use default
-    let schoolId = 1;
-    
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      // Token is present, try to use it (we'll verify it later)
-      console.log('Authorization header present');
-    }
-    
-    // Use school_id = 1 for now (single school setup)
-    console.log('Processing request for school_id:', schoolId);
-
+    const schoolId = 1; // Single school setup
     const db = getSupabaseClient();
 
     if (req.method === 'GET') {
-      // Get settings for school
+      console.log('GET /settings - Fetching settings for school_id:', schoolId);
+      
       const { data: schoolSettings, error } = await db
         .from('settings')
         .select('*')
@@ -35,9 +58,10 @@ Deno.serve(async (req: Request) => {
       }
 
       if (schoolSettings && schoolSettings.length > 0) {
+        console.log('Settings found:', schoolSettings[0]);
         return successResponse(schoolSettings[0]);
       } else {
-        // Return default settings if none exist
+        console.log('No settings found, returning defaults');
         return successResponse({
           school_id: schoolId,
           principal_name: '',
@@ -56,7 +80,8 @@ Deno.serve(async (req: Request) => {
         });
       }
     } else if (req.method === 'PUT') {
-      // Update settings
+      console.log('PUT /settings - Updating settings for school_id:', schoolId);
+      
       const body = await req.json();
       const {
         principal_name,
@@ -87,6 +112,7 @@ Deno.serve(async (req: Request) => {
       }
 
       if (existingSettings && existingSettings.length > 0) {
+        console.log('Updating existing settings');
         // Update existing settings
         const { error: updateError } = await db
           .from('settings')
@@ -113,6 +139,7 @@ Deno.serve(async (req: Request) => {
           return errorResponse('Failed to update settings', 500);
         }
       } else {
+        console.log('Creating new settings');
         // Create new settings
         const { error: insertError } = await db
           .from('settings')
@@ -141,6 +168,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
+      console.log('Settings updated successfully');
       return successResponse({
         success: true,
         message: 'Settings updated successfully'
