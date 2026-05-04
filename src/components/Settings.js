@@ -49,7 +49,7 @@ const Settings = ({ user }) => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/settings`, {
+      const response = await fetch(`/api/settings/get`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -202,7 +202,7 @@ const Settings = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/settings`, {
+      const response = await fetch(`/api/settings/update`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -257,7 +257,7 @@ const Settings = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/settings`, {
+      const response = await fetch(`/api/settings/update`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
