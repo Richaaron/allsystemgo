@@ -782,6 +782,7 @@ app.get('/api/settings', authenticateToken, async (req, res) => {
 app.put('/api/settings', authenticateToken, async (req, res) => {
   try {
     const schoolId = req.user.school_id || 1;
+    console.log('Updating settings for school_id:', schoolId);
     const {
       principal_name,
       principal_title,
@@ -798,58 +799,56 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
       school_address
     } = req.body;
 
+    // Build update object with only defined fields
+    const updateData = {};
+    if (principal_name !== undefined) updateData.principal_name = principal_name;
+    if (principal_title !== undefined) updateData.principal_title = principal_title;
+    if (proprietress_name !== undefined) updateData.proprietress_name = proprietress_name;
+    if (proprietress_title !== undefined) updateData.proprietress_title = proprietress_title;
+    if (school_motto !== undefined) updateData.school_motto = school_motto;
+    if (result_header !== undefined) updateData.result_header = result_header;
+    if (result_footer !== undefined) updateData.result_footer = result_footer;
+    if (show_grades !== undefined) updateData.show_grades = show_grades;
+    if (show_positions !== undefined) updateData.show_positions = show_positions;
+    if (show_remarks !== undefined) updateData.show_remarks = show_remarks;
+    if (school_email !== undefined) updateData.school_email = school_email;
+    if (school_phone !== undefined) updateData.school_phone = school_phone;
+    if (school_address !== undefined) updateData.school_address = school_address;
+    
+    updateData.updated_at = new Date();
+
     // Check if settings exist
     const existingSettings = await db.select().from(settings)
       .where(eq(settings.school_id, schoolId))
       .limit(1);
 
+    console.log('Existing settings found:', existingSettings?.length || 0);
+
     if (existingSettings && existingSettings.length > 0) {
       // Update existing settings
+      console.log('Updating existing settings record');
       await db.update(settings)
-        .set({
-          principal_name,
-          principal_title,
-          proprietress_name,
-          proprietress_title,
-          school_motto,
-          result_header,
-          result_footer,
-          show_grades,
-          show_positions,
-          show_remarks,
-          school_email,
-          school_phone,
-          school_address,
-          updated_at: new Date()
-        })
+        .set(updateData)
         .where(eq(settings.school_id, schoolId));
     } else {
-      // Create new settings
-      await db.insert(settings).values({
+      // Create new settings with required fields
+      console.log('Creating new settings record');
+      const insertData = {
         school_id: schoolId,
-        principal_name,
-        principal_title,
-        proprietress_name,
-        proprietress_title,
-        school_motto,
-        result_header,
-        result_footer,
-        show_grades,
-        show_positions,
-        show_remarks,
-        school_email,
-        school_phone,
-        school_address
-      });
+        ...updateData
+      };
+      await db.insert(settings).values(insertData);
     }
 
+    console.log('Settings save completed successfully');
     res.json({ 
       success: true, 
       message: 'Settings updated successfully' 
     });
   } catch (error) {
     console.error('Settings update error:', error);
-    res.status(500).json({ error: 'Failed to update settings' });
+    console.error('Error details:', error.message, error.code);
+    res.status(500).json({ error: `Failed to update settings: ${error.message}` });
   }
 });
 
