@@ -882,8 +882,7 @@ app.use((req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log(`🏫 Folusho Victory Schools API Server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔐 Login endpoint: http://localhost:${PORT}/api/auth/login`);
