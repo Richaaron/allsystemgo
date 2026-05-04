@@ -128,6 +128,12 @@ const Settings = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       
+      if (!token) {
+        setErrors({ general: 'Session expired. Please login again.' });
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: {
@@ -153,11 +159,14 @@ const Settings = ({ user }) => {
         // Clear message after 3 seconds
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        setErrors({ currentPassword: data.error || 'Failed to change password' });
+        // Handle different error cases
+        const errorMessage = data.error || data.message || 'Failed to change password';
+        setErrors({ general: errorMessage });
+        console.error('Password change failed:', data);
       }
     } catch (error) {
       console.error('Password change error:', error);
-      setErrors({ general: 'Failed to change password. Please try again.' });
+      setErrors({ general: 'Network error. Please check your connection and try again.' });
     } finally {
       setIsSubmitting(false);
     }
