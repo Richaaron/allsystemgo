@@ -569,7 +569,7 @@ const ResultsNigerian = ({ user }) => {
               </div>
               
               {/* Title and Name */}
-              <p style={{ margin: '8px 0 4px 0, fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>
+              <p style={{ margin: '8px 0 4px 0', fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>
                 {resultSettings.principalName || 'Principal Name'}
               </p>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>
