@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Settings.css';
 
 const Settings = ({ user }) => {
-  const [activeTab, setActiveTab] = useState(user.role === 'admin' ? 'result-settings' : 'password');
+  const [activeTab, setActiveTab] = useState(user.role === 'admin' ? 'school-profile' : 'password');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
@@ -168,6 +168,25 @@ const Settings = ({ user }) => {
     setErrors({});
     setSuccessMessage('');
 
+    // Validation
+    const newErrors = {};
+    if (!schoolProfile.schoolEmail.trim()) {
+      newErrors.schoolEmail = 'School email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(schoolProfile.schoolEmail)) {
+      newErrors.schoolEmail = 'Please enter a valid email address';
+    }
+    if (!schoolProfile.schoolPhone.trim()) {
+      newErrors.schoolPhone = 'School phone number is required';
+    }
+    if (!schoolProfile.schoolAddress.trim()) {
+      newErrors.schoolAddress = 'School address is required';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -297,6 +316,77 @@ const Settings = ({ user }) => {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
+
+  const renderSchoolProfileTab = () => (
+    <div className="settings-section">
+      <h3>School Profile</h3>
+      <p className="section-description">
+        Manage your school's contact information and details. These will be displayed on reports and correspondence.
+      </p>
+      
+      <form onSubmit={handleSchoolProfileSave} className="settings-form">
+        <div className="form-group">
+          <label>School Email *</label>
+          <input
+            type="email"
+            name="schoolEmail"
+            value={schoolProfile.schoolEmail}
+            onChange={handleSchoolProfileInputChange}
+            className={errors.schoolEmail ? 'error' : ''}
+            placeholder="e.g., info@folushovictory.com"
+          />
+          {errors.schoolEmail && <span className="error-message">{errors.schoolEmail}</span>}
+          <small>Official school email address for contact and correspondence</small>
+        </div>
+
+        <div className="form-group">
+          <label>School Phone Number *</label>
+          <input
+            type="tel"
+            name="schoolPhone"
+            value={schoolProfile.schoolPhone}
+            onChange={handleSchoolProfileInputChange}
+            className={errors.schoolPhone ? 'error' : ''}
+            placeholder="e.g., +234-800-000-0000"
+          />
+          {errors.schoolPhone && <span className="error-message">{errors.schoolPhone}</span>}
+          <small>Primary contact phone number for the school</small>
+        </div>
+
+        <div className="form-group">
+          <label>School Address *</label>
+          <input
+            type="text"
+            name="schoolAddress"
+            value={schoolProfile.schoolAddress}
+            onChange={handleSchoolProfileInputChange}
+            className={errors.schoolAddress ? 'error' : ''}
+            placeholder="e.g., 123 School Street, Kaduna, Kaduna State"
+          />
+          {errors.schoolAddress && <span className="error-message">{errors.schoolAddress}</span>}
+          <small>Complete physical address of the school</small>
+        </div>
+
+        <div className="form-group">
+          <label>School Motto</label>
+          <input
+            type="text"
+            name="schoolMotto"
+            value={schoolProfile.schoolMotto}
+            onChange={handleSchoolProfileInputChange}
+            placeholder="e.g., Excellence in Education Since 2009"
+          />
+          <small>School motto or tagline</small>
+        </div>
+
+        <div className="form-actions">
+          <button type="submit" disabled={isSubmitting} className="btn-primary">
+            {isSubmitting ? 'Saving Profile...' : 'Save School Profile'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 
   const renderPasswordTab = () => (
     <div className="settings-section">
@@ -556,6 +646,12 @@ const Settings = ({ user }) => {
                 Result Settings
               </button>
               <button
+                className={`tab-btn ${activeTab === 'school-profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('school-profile')}
+              >
+                School Profile
+              </button>
+              <button
                 className={`tab-btn ${activeTab === 'password' ? 'active' : ''}`}
                 onClick={() => setActiveTab('password')}
               >
@@ -595,6 +691,7 @@ const Settings = ({ user }) => {
       {!isLoading && (
         <div className="settings-content">
           {user.role === 'admin' && activeTab === 'result-settings' && renderResultSettingsTab()}
+          {user.role === 'admin' && activeTab === 'school-profile' && renderSchoolProfileTab()}
           {activeTab === 'password' && renderPasswordTab()}
         </div>
       )}
