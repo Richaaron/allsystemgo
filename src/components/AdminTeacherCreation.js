@@ -12,12 +12,10 @@ const AdminTeacherCreation = () => {
       middleName: '',
       email: '',
       phone: '',
-      dateOfBirth: '',
       gender: 'male',
       nationality: 'Nigerian',
       stateOfOrigin: '',
       lga: '',
-      address: '',
       emergencyContactName: '',
       emergencyContactPhone: '',
       emergencyContactRelationship: ''
@@ -25,11 +23,9 @@ const AdminTeacherCreation = () => {
     professionalInfo: {
       role: TEACHER_ROLES.SUBJECT_TEACHER,
       department: '',
-      qualification: '',
       specialization: '',
       experience: '',
       previousSchool: '',
-      dateJoined: new Date().toISOString().split('T')[0],
       employmentType: 'full-time',
       salary: ''
     },
@@ -79,12 +75,6 @@ const AdminTeacherCreation = () => {
   const departments = [
     'Sciences', 'Mathematics', 'Languages', 'Social Sciences', 'Vocational Studies',
     'Physical Education', 'Primary Education', 'Early Childhood Education', 'Administration'
-  ];
-
-  // Qualifications
-  const qualifications = [
-    'B.Ed', 'B.Sc Education', 'B.A Education', 'M.Ed', 'M.Sc', 'M.A',
-    'PhD', 'PGDE', 'NCE', 'OND', 'HND', 'Diploma in Education'
   ];
 
   // Handle form field changes
@@ -137,10 +127,8 @@ const AdminTeacherCreation = () => {
       if (!formData.personalInfo.lastName.trim()) newErrors.lastName = 'Last name is required';
       if (!formData.personalInfo.email.trim()) newErrors.email = 'Email is required';
       if (!formData.personalInfo.phone.trim()) newErrors.phone = 'Phone number is required';
-      if (!formData.personalInfo.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
       if (!formData.personalInfo.gender) newErrors.gender = 'Gender is required';
       if (!formData.personalInfo.stateOfOrigin) newErrors.stateOfOrigin = 'State of origin is required';
-      if (!formData.personalInfo.address.trim()) newErrors.address = 'Address is required';
       
       // Email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -157,9 +145,7 @@ const AdminTeacherCreation = () => {
       // Professional info validation
       if (!formData.professionalInfo.role) newErrors.role = 'Role is required';
       if (!formData.professionalInfo.department) newErrors.department = 'Department is required';
-      if (!formData.professionalInfo.qualification) newErrors.qualification = 'Qualification is required';
       if (!formData.professionalInfo.experience) newErrors.experience = 'Experience is required';
-      if (!formData.professionalInfo.dateJoined) newErrors.dateJoined = 'Date joined is required';
       
       // Salary validation for full-time
       if (formData.professionalInfo.employmentType === 'full-time' && !formData.professionalInfo.salary) {
@@ -270,12 +256,10 @@ const AdminTeacherCreation = () => {
         middleName: '',
         email: '',
         phone: '',
-        dateOfBirth: '',
         gender: 'male',
         nationality: 'Nigerian',
         stateOfOrigin: '',
         lga: '',
-        address: '',
         emergencyContactName: '',
         emergencyContactPhone: '',
         emergencyContactRelationship: ''
@@ -283,11 +267,9 @@ const AdminTeacherCreation = () => {
       professionalInfo: {
         role: TEACHER_ROLES.SUBJECT_TEACHER,
         department: '',
-        qualification: '',
         specialization: '',
         experience: '',
         previousSchool: '',
-        dateJoined: new Date().toISOString().split('T')[0],
         employmentType: 'full-time',
         salary: ''
       },
@@ -442,16 +424,7 @@ const AdminTeacherCreation = () => {
                 {errors.phone && <span className="error-message">{errors.phone}</span>}
               </div>
 
-              <div className="form-group">
-                <label>Date of Birth *</label>
-                <input
-                  type="date"
-                  value={formData.personalInfo.dateOfBirth}
-                  onChange={(e) => handleInputChange('personalInfo', 'dateOfBirth', e.target.value)}
-                  className={errors.dateOfBirth ? 'error' : ''}
-                />
-                {errors.dateOfBirth && <span className="error-message">{errors.dateOfBirth}</span>}
-              </div>
+
 
               <div className="form-group">
                 <label>Gender *</label>
@@ -500,16 +473,7 @@ const AdminTeacherCreation = () => {
                 />
               </div>
 
-              <div className="form-group full-width">
-                <label>Address *</label>
-                <textarea
-                  value={formData.personalInfo.address}
-                  onChange={(e) => handleInputChange('personalInfo', 'address', e.target.value)}
-                  className={errors.address ? 'error' : ''}
-                  rows="3"
-                />
-                {errors.address && <span className="error-message">{errors.address}</span>}
-              </div>
+
 
               <div className="form-group">
                 <label>Emergency Contact Name</label>
@@ -577,20 +541,7 @@ const AdminTeacherCreation = () => {
                 {errors.department && <span className="error-message">{errors.department}</span>}
               </div>
 
-              <div className="form-group">
-                <label>Highest Qualification *</label>
-                <select
-                  value={formData.professionalInfo.qualification}
-                  onChange={(e) => handleInputChange('professionalInfo', 'qualification', e.target.value)}
-                  className={errors.qualification ? 'error' : ''}
-                >
-                  <option value="">Select Qualification</option>
-                  {qualifications.map(qual => (
-                    <option key={qual} value={qual}>{qual}</option>
-                  ))}
-                </select>
-                {errors.qualification && <span className="error-message">{errors.qualification}</span>}
-              </div>
+
 
               <div className="form-group">
                 <label>Specialization</label>
@@ -629,16 +580,7 @@ const AdminTeacherCreation = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Date Joined *</label>
-                <input
-                  type="date"
-                  value={formData.professionalInfo.dateJoined}
-                  onChange={(e) => handleInputChange('professionalInfo', 'dateJoined', e.target.value)}
-                  className={errors.dateJoined ? 'error' : ''}
-                />
-                {errors.dateJoined && <span className="error-message">{errors.dateJoined}</span>}
-              </div>
+
 
               <div className="form-group">
                 <label>Employment Type</label>
