@@ -57,8 +57,21 @@ const Settings = ({ user }) => {
         }
       });
 
+      console.log('Settings API Response Status:', response.status);
+      console.log('Settings API Response URL:', response.url);
+
+      if (response.status === 401) {
+        console.error('401 Unauthorized - Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url
+        });
+        throw new Error('Unauthorized access to settings API');
+      }
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Settings data received:', data);
         
         // Convert snake_case from API to camelCase for state
         setResultSettings({
@@ -81,6 +94,14 @@ const Settings = ({ user }) => {
           schoolAddress: data.school_address || 'Kaduna, Kaduna State',
           schoolMotto: data.school_motto || 'Excellence in Education Since 2009'
         });
+      } else {
+        const errorText = await response.text();
+        console.error('Settings API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        throw new Error(`Settings API returned status ${response.status}`);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -216,6 +237,18 @@ const Settings = ({ user }) => {
         })
       });
 
+      console.log('School Profile Save - Response Status:', response.status);
+      
+      if (response.status === 401) {
+        console.error('401 Unauthorized on PUT - Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          token: token ? 'present' : 'missing'
+        });
+        throw new Error('Unauthorized - Session may have expired');
+      }
+
       if (response.ok) {
         // Also save to localStorage for offline access
         localStorage.setItem('schoolProfile', JSON.stringify(schoolProfile));
@@ -223,11 +256,17 @@ const Settings = ({ user }) => {
         setSuccessMessage('School profile saved successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        setErrors({ general: 'Failed to save school profile. Please try again.' });
+        const errorText = await response.text();
+        console.error('API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        setErrors({ general: `Failed to save school profile (${response.status}). Please try again.` });
       }
     } catch (error) {
       console.error('School profile save error:', error);
-      setErrors({ general: 'Failed to save school profile. Please try again.' });
+      setErrors({ general: error.message || 'Failed to save school profile. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
