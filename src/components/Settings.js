@@ -47,11 +47,13 @@ const Settings = ({ user }) => {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
+      const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/settings-get`, {
+      const response = await fetch(`/api/settings`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         }
       });
 
@@ -198,10 +200,13 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/settings-update`, {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`/api/settings`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
           school_email: schoolProfile.schoolEmail,
@@ -250,10 +255,13 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/settings-update`, {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`/api/settings`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
           principal_name: resultSettings.principalName,
