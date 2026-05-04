@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt');
 const { drizzle } = require('drizzle-orm/postgres-js');
 const postgres = require('postgres');
 const { eq, and, desc, asc } = require('drizzle-orm');
-const nodemailer = require('nodemailer');
+const nodemailer = require('nodemailer').default || require('nodemailer');
 
 // Import database schema
 const schema = require('./src/lib/db/schema.js');

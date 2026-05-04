@@ -1,0 +1,5 @@
+# Supabase Configuration
+# Supabase automatically discovers functions from the functions directory
+
+[analytics]
+enabled = true
