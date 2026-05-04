@@ -135,7 +135,7 @@ const Settings = ({ user }) => {
         return;
       }
 
-      const response = await fetch(`${config.apiUrl}/auth/change-password`, {
+      const response = await fetch(`/api/auth/change-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
