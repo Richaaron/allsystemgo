@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabaseService } from '../services/supabaseService';
+import { emailNotificationService } from '../services/emailNotificationService';
 
 const TeacherClean = () => {
   const [teachers, setTeachers] = useState([]);
@@ -204,11 +205,29 @@ const TeacherClean = () => {
         // Refresh the list
         await loadTeachers();
 
+        // Send welcome email with credentials to teacher
+        const emailResult = await emailNotificationService.sendTeacherWelcomeEmail({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          username: generatedUsername,
+          password: generatedPassword,
+          staffId: newTeacher.staff_id || '',
+          department: formData.department
+        });
+
+        if (emailResult.success) {
+          console.log('✅ Email sent to teacher:', formData.email);
+        } else {
+          console.warn('⚠️ Email not sent:', emailResult.message);
+        }
+
         // Show credentials that will be sent to teacher's email
         alert(
           `Teacher Created Successfully!\n\n` +
-          `Credentials will be sent to: ${formData.email}\n\n` +
-          `Username: ${generatedUsername}\n` +
+          `Credentials sent to: ${formData.email}\n` +
+          (emailResult.success ? '(Email sent successfully)\n' : '(Email service not configured - please set up EmailJS)\n') +
+          `\nUsername: ${generatedUsername}\n` +
           `Password: ${generatedPassword}\n\n` +
           `Please save these credentials securely.`
         );
