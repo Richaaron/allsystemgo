@@ -19,10 +19,27 @@ export function getSupabaseClient() {
 // Verify JWT token
 export function verifyToken(token: string): any {
   try {
+    // Handle mock tokens (for development)
+    if (token.startsWith('mock_')) {
+      console.log('Mock token detected, parsing payload');
+      const payload = JSON.parse(atob(token.substring(5)));
+      console.log('Mock token payload:', payload);
+      
+      // Check expiration
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+        throw new Error('Token expired');
+      }
+      return payload;
+    }
+    
+    // Handle real JWT tokens
+    console.log('Verifying JWT token with secret:', JWT_SECRET ? 'set' : 'not set');
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('Token verified successfully:', decoded);
     return decoded;
-  } catch (error) {
-    throw new Error('Invalid token');
+  } catch (error: any) {
+    console.error('Token verification failed:', error.message);
+    throw new Error(`Invalid token: ${error.message}`);
   }
 }
 
@@ -38,12 +55,15 @@ export function generateToken(user: any) {
 // Authenticate request
 export function authenticateRequest(req: Request): any {
   const authHeader = req.headers.get('authorization');
+  console.log('Authorization header:', authHeader ? 'present' : 'missing');
   const token = authHeader?.split(' ')[1];
   
   if (!token) {
+    console.error('No token in authorization header');
     throw new Error('No token provided');
   }
   
+  console.log('Token type:', token.startsWith('mock_') ? 'mock' : 'jwt', 'first 20 chars:', token.substring(0, 20));
   return verifyToken(token);
 }
 

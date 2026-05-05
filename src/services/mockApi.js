@@ -1,7 +1,6 @@
 // Mock API service for FOLUSHO VICTORY SCHOOLS demo
 // This simulates backend authentication and data responses
 import config from '../config/envConfig';
-import jwt from 'jsonwebtoken';
 
 const mockUsers = {
   admin: {
@@ -47,16 +46,17 @@ const mockUsers = {
 // Simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// JWT Secret - must match Supabase Edge Functions
-const JWT_SECRET = process.env.REACT_APP_JWT_SECRET || 'nigerian-school-jwt-secret-2024';
-
-// Generate proper JWT token
-const generateJWTToken = (user) => {
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
+// Generate browser-compatible JWT-like token (Base64 encoded)
+const generateBrowserToken = (user) => {
+  const payload = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+  };
+  // Create a simple Base64-encoded token
+  return 'mock_' + btoa(JSON.stringify(payload));
 };
 
 // Mock authentication
@@ -73,8 +73,8 @@ export const mockLogin = async (email, password, role) => {
     throw new Error('Invalid email or password');
   }
   
-  // Generate proper JWT token
-  const token = generateJWTToken(user);
+  // Generate browser-compatible token
+  const token = generateBrowserToken(user);
   
   return {
     success: true,
