@@ -12,8 +12,9 @@ const config = {
     anonKey: supabaseAnonKey
   },
 
-  // API Configuration - Using Supabase PostgREST API
+  // API Configuration
   apiUrl: `${supabaseUrl}/rest/v1`,
+  functionsUrl: `${supabaseUrl}/functions/v1`,
   apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT) || 10000,
   
   // Supabase API Key for public access

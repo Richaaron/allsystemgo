@@ -49,29 +49,24 @@ const Settings = ({ user }) => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       
-      if (!token) {
-        console.warn('No token found');
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('Loading settings from backend API...');
+      console.log('Loading settings from Supabase Edge Function...');
       
-      // Call backend API endpoint
-      const response = await fetch(`${config.apiUrl}/settings`, {
+      // Call Supabase Edge Function with auth headers
+      const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'apikey': config.supabaseKey,
           'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-
+      
       if (data) {
         // Convert snake_case from API to camelCase for state
         setResultSettings({
@@ -284,13 +279,14 @@ const Settings = ({ user }) => {
         return;
       }
 
-      console.log('Saving result settings via backend API...');
+      console.log('Saving result settings to Supabase Edge Function...');
 
-      // Call backend API endpoint
-      const response = await fetch(`${config.apiUrl}/settings`, {
+      // Call Supabase Edge Function to update settings
+      const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'apikey': config.supabaseKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -308,8 +304,9 @@ const Settings = ({ user }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save settings');
+        const errorData = await response.text();
+        console.error('API error response:', errorData);
+        throw new Error(`Failed to save settings: ${response.status}`);
       }
 
       // Also save to localStorage for offline access
