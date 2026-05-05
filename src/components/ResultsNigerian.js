@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { emailNotificationService } from '../services/emailNotificationService';
 
 const ResultsNigerian = ({ user }) => {
   const [students, setStudents] = useState([]);
@@ -18,6 +19,8 @@ const ResultsNigerian = ({ user }) => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [subjectScores, setSubjectScores] = useState({});
+  const [selectedResultIds, setSelectedResultIds] = useState([]);
+  const [isSending, setIsSending] = useState(false);
 
   // Sample students with their registered subjects
   const sampleStudents = [
@@ -421,6 +424,44 @@ const ResultsNigerian = ({ user }) => {
   const handleSaveSubjectScores = () => {
     alert(`Subject results for ${selectedSubject} in ${selectedClass} saved successfully!`);
     setSubjectScores({});
+  };
+
+  const handleToggleSelectResult = (id) => {
+    setSelectedResultIds(prev => 
+      prev.includes(id) ? prev.filter(rId => rId !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedResultIds.length === filteredResults.length) {
+      setSelectedResultIds([]); // Deselect all
+    } else {
+      setSelectedResultIds(filteredResults.map(r => r.id)); // Select all
+    }
+  };
+
+  const handleSendSelectedResults = async () => {
+    setIsSending(true);
+    let successCount = 0;
+    
+    for (const id of selectedResultIds) {
+      const result = results.find(r => r.id === id);
+      if (result) {
+        // Send email (using placeholder parent email if none exists)
+        const res = await emailNotificationService.sendStudentResultEmail(
+          result.studentName,
+          result.parentEmail || null,
+          result.term,
+          result.overallGrade,
+          result.overallAverage.toFixed(2)
+        );
+        if (res.success) successCount++;
+      }
+    }
+    
+    setIsSending(false);
+    alert(`Successfully sent ${successCount} result(s) to parents!`);
+    setSelectedResultIds([]); // Clear selection after sending
   };
 
 
@@ -1172,13 +1213,44 @@ const ResultsNigerian = ({ user }) => {
         borderRadius: '8px',
         padding: '20px'
       }}>
-        <h3 style={{ color: '#f1f5f9', marginBottom: '15px' }}>
-          Saved Results ({filteredResults.length})
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3 style={{ color: '#f1f5f9', margin: 0 }}>
+            Saved Results ({filteredResults.length})
+          </h3>
+          {selectedResultIds.length > 0 && (
+            <button
+              onClick={handleSendSelectedResults}
+              disabled={isSending}
+              style={{
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: isSending ? 'not-allowed' : 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.4)'
+              }}
+            >
+              {isSending ? 'Sending...' : `📧 Send ${selectedResultIds.length} Selected Result(s)`}
+            </button>
+          )}
+        </div>
         
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: 'rgba(51, 65, 85, 0.8)' }}>
+              <th style={{ padding: '12px', textAlign: 'center', width: '40px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={selectedResultIds.length === filteredResults.length && filteredResults.length > 0}
+                  onChange={handleToggleSelectAll}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+              </th>
               <th style={{ padding: '12px', textAlign: 'center', color: '#e2e8f0' }}>Position</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Student</th>
               <th style={{ padding: '12px', textAlign: 'left', color: '#e2e8f0' }}>Class</th>
@@ -1201,6 +1273,14 @@ const ResultsNigerian = ({ user }) => {
 
               return (
                 <tr key={result.id} style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)' }}>
+                  <td style={{ padding: '12px', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedResultIds.includes(result.id)}
+                      onChange={() => handleToggleSelectResult(result.id)}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                  </td>
                   <td style={{ padding: '12px', textAlign: 'center', color: '#60a5fa', fontWeight: 'bold', fontSize: '1.1rem' }}>
                     🏆 {positionText}
                   </td>

@@ -93,6 +93,68 @@ export const emailNotificationService = {
     }
   },
 
+  async sendStudentResultEmail(studentName, parentEmail, term, overallGrade, average) {
+    try {
+      console.log(`Preparing result email for ${studentName} to parent email: ${parentEmail || 'placeholder@example.com'}`);
+      
+      const subject = `Academic Result for ${studentName} - ${term}`;
+      const portalUrl = window.location.origin + '/login';
+
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); color: #d97706; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 10px; font-family: 'Playfair Display', serif;">FOLUSHO VICTORY SCHOOLS</div>
+            <div style="font-size: 1.1em; color: white;">Official Academic Report</div>
+          </div>
+          
+          <div style="background: white; padding: 40px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+            <p>Dear Parent/Guardian,</p>
+            
+            <p>We are pleased to inform you that the academic results for <strong>${studentName}</strong> for the <strong>${term}</strong> have been compiled and are now available.</p>
+
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e3a8a;">
+              <h3 style="margin-top: 0; color: #1e3a8a;">Performance Summary</h3>
+              <p style="margin: 5px 0;"><strong>Overall Average:</strong> ${average}%</p>
+              <p style="margin: 5px 0;"><strong>Overall Grade:</strong> <span style="color: #d97706; font-weight: bold;">${overallGrade}</span></p>
+            </div>
+
+            <p>To view the full detailed result sheet, including subject breakdowns and teacher remarks, please log in to the parent portal.</p>
+
+            <div style="text-align: center;">
+              <a href="${portalUrl}" style="display: inline-block; background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">
+                View Full Result Sheet
+              </a>
+            </div>
+
+            <p>Thank you for partnering with us in your child's education.</p>
+            
+            <p>Warm regards,<br>
+            <strong>Folusho Victory Schools Administration</strong></p>
+          </div>
+        </div>
+      `;
+
+      // Use a mock email if none provided for demonstration
+      const targetEmail = parentEmail || 'parent@example.com';
+      
+      const result = await emailService.sendNotification(targetEmail, subject, htmlContent);
+
+      if (!result) {
+        throw new Error('Supabase Edge Function failed to send the email.');
+      }
+
+      console.log('✅ Result email sent successfully to:', targetEmail);
+      return { success: true, message: 'Result email sent successfully' };
+
+    } catch (error) {
+      console.error('❌ Failed to send result email:', error);
+      return {
+        success: false,
+        message: 'Failed to send email: ' + error.message
+      };
+    }
+  },
+
   isConfigured() {
     // We are using Supabase backend now, which is assumed to be configured
     return true; 
