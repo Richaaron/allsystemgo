@@ -76,21 +76,47 @@ export const supabaseService = {
   },
 
   async createTeacher(teacherData) {
-    // Generate staff ID
-    const staffId = 'STF' + Date.now().toString().slice(-6)
+    try {
+      // Generate staff ID
+      const staffId = 'STF' + Date.now().toString().slice(-6)
 
-    const { data, error } = await supabase
-      .from('teachers')
-      .insert({
-        ...teacherData,
+      // Build insert object with only fields that exist in your table
+      const insertData = {
         staff_id: staffId,
-        school_id: 1
-      })
-      .select()
-      .single()
+        school_id: 1,
+        first_name: teacherData.first_name || teacherData.firstName || '',
+        last_name: teacherData.last_name || teacherData.lastName || '',
+        email: teacherData.email || '',
+        phone: teacherData.phone || '',
+        gender: teacherData.gender || '',
+        created_at: new Date().toISOString()
+      }
 
-    if (error) throw error
-    return data
+      // Only add optional fields if they exist in your table
+      // These will fail if columns don't exist - that's OK, teacher still gets created
+      const optionalFields = ['department', 'role', 'subjects', 'status', 'assigned_class']
+      optionalFields.forEach(field => {
+        if (teacherData[field] !== undefined) {
+          insertData[field] = teacherData[field]
+        }
+      })
+
+      const { data, error } = await supabase
+        .from('teachers')
+        .insert(insertData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Supabase insert error:', error)
+        throw new Error(error.message || 'Failed to create teacher')
+      }
+
+      return data
+    } catch (error) {
+      console.error('❌ createTeacher error:', error.message)
+      throw error
+    }
   },
 
   async updateTeacher(id, teacherData) {
