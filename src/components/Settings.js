@@ -53,7 +53,7 @@ const Settings = ({ user }) => {
       console.log('Supabase Key available:', !!config.supabaseKey);
       console.log('Supabase Key length:', config.supabaseKey?.length || 0);
       
-      // Call Supabase Edge Function (JWT verification disabled)
+      // Call Supabase Edge Function (JWT verification disabled - no auth headers needed)
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'GET',
         headers: {
