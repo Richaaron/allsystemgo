@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import config from '../config/envConfig';
+import { supabase } from '../services/supabaseService';
 
 const Settings = ({ user }) => {
   const [activeTab, setActiveTab] = useState(user.role === 'admin' ? 'school-profile' : 'password');
@@ -136,48 +137,76 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
+      // Get current user from localStorage
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.id) {
         setErrors({ general: 'Session expired. Please login again.' });
         setIsSubmitting(false);
         return;
       }
 
-      // Use Edge Function endpoint
-      const apiUrl = `${config.functionsUrl}/auth-change-password`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
+      console.log('🔐 Changing password for user:', userData.email);
+
+      // Step 1: Verify current password by fetching user
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('id, email, password')
+        .eq('id', userData.id)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ Failed to fetch user:', fetchError);
+        setErrors({ general: 'Failed to verify current password. Please try again.' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!existingUser) {
+        console.error('❌ User not found');
+        setErrors({ general: 'User not found. Please login again.' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 2: Verify current password matches
+      if (existingUser.password !== passwordData.currentPassword) {
+        console.error('❌ Current password does not match');
+        setErrors({ currentPassword: 'Current password is incorrect' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 3: Update password directly in database
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          password: passwordData.newPassword,
+          updated_at: new Date().toISOString()
         })
+        .eq('id', userData.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Failed to update password:', error);
+        setErrors({ general: 'Failed to update password: ' + error.message });
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('✅ Password changed successfully for:', data.email);
+      setSuccessMessage('Password changed successfully!');
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       });
 
-      const data = await response.json();
+      // Clear message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
 
-      if (response.ok) {
-        setSuccessMessage('Password changed successfully!');
-        setPasswordData({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        });
-        
-        // Clear message after 3 seconds
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        // Handle different error cases
-        const errorMessage = data.error || data.message || 'Failed to change password';
-        setErrors({ general: errorMessage });
-        console.error('Password change failed:', data);
-      }
     } catch (error) {
-      console.error('Password change error:', error);
+      console.error('❌ Password change error:', error);
       setErrors({ general: 'Network error. Please check your connection and try again.' });
     } finally {
       setIsSubmitting(false);
@@ -211,33 +240,37 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('token');
-      
-      // Decode JWT to get school_id
-      let schoolId = 1;
-      if (token) {
-        try {
-          const parts = token.split('.');
-          if (parts.length === 3) {
-            const payload = parts[1];
-            const paddedPayload = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
-            const decoded = JSON.parse(atob(paddedPayload));
-            schoolId = decoded.school_id || 1;
-          }
-        } catch (e) {
-          console.warn('Could not decode token:', e.message);
-        }
+      console.log('📝 Saving school profile to database...');
+
+      // Update school in Supabase database
+      const { data, error } = await supabase
+        .from('schools')
+        .update({
+          name: schoolProfile.schoolName || 'Folusho Victory Schools',
+          email: schoolProfile.schoolEmail,
+          phone: schoolProfile.schoolPhone,
+          address_city: schoolProfile.schoolAddress,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 1)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Failed to save school profile:', error);
+        setErrors({ general: 'Failed to save school profile: ' + error.message });
+        setIsSubmitting(false);
+        return;
       }
 
-      console.log('Saving school profile for school_id:', schoolId);
-
-      // Save to localStorage for access
+      // Also save to localStorage for offline access
       localStorage.setItem('schoolProfile', JSON.stringify(schoolProfile));
-      
+
+      console.log('✅ School profile saved successfully:', data);
       setSuccessMessage('School profile saved successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      console.error('School profile save error:', error);
+      console.error('❌ School profile save error:', error);
       setErrors({ general: error.message || 'Failed to save school profile. Please try again.' });
     } finally {
       setIsSubmitting(false);
