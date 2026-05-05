@@ -242,8 +242,10 @@ const Settings = ({ user }) => {
     try {
       console.log('📝 Saving school profile to database...');
 
-      // Update school in Supabase database
-      const { data, error } = await supabase
+      let data, error;
+
+      // Try update WITH updated_at first
+      const result = await supabase
         .from('schools')
         .update({
           name: schoolProfile.schoolName || 'Folusho Victory Schools',
@@ -255,6 +257,29 @@ const Settings = ({ user }) => {
         .eq('id', 1)
         .select()
         .single();
+
+      data = result.data;
+      error = result.error;
+
+      // If updated_at column is missing, retry without it
+      if (error && error.message && error.message.includes("updated_at")) {
+        console.log('⚠️ updated_at column missing, retrying without it...');
+
+        const result2 = await supabase
+          .from('schools')
+          .update({
+            name: schoolProfile.schoolName || 'Folusho Victory Schools',
+            email: schoolProfile.schoolEmail,
+            phone: schoolProfile.schoolPhone,
+            address_city: schoolProfile.schoolAddress
+          })
+          .eq('id', 1)
+          .select()
+          .single();
+
+        data = result2.data;
+        error = result2.error;
+      }
 
       if (error) {
         console.error('❌ Failed to save school profile:', error);
