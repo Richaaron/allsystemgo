@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import config from '../config/envConfig';
-import { supabase } from '../services/supabaseService';
+import { supabase, supabaseService } from '../services/supabaseService';
 
 const Settings = ({ user }) => {
   const [activeTab, setActiveTab] = useState(user.role === 'admin' ? 'school-profile' : 'password');
@@ -196,6 +196,15 @@ const Settings = ({ user }) => {
 
       console.log('✅ Password changed successfully for:', data.email);
       setSuccessMessage('Password changed successfully!');
+
+      // Log the activity
+      await supabaseService.logTeacherActivity(
+        user?.name || user?.email || data.email,
+        user?.role || 'Teacher',
+        'PASSWORD_CHANGE',
+        'Updated account password successfully.'
+      );
+
       setPasswordData({
         currentPassword: '',
         newPassword: '',

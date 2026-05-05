@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { emailNotificationService } from '../services/emailNotificationService';
+import { supabaseService } from '../services/supabaseService';
 
 const ResultsNigerian = ({ user }) => {
   const [students, setStudents] = useState([]);
@@ -421,8 +422,17 @@ const ResultsNigerian = ({ user }) => {
     });
   };
 
-  const handleSaveSubjectScores = () => {
+  const handleSaveSubjectScores = async () => {
     alert(`Subject results for ${selectedSubject} in ${selectedClass} saved successfully!`);
+    
+    // Log the activity
+    await supabaseService.logTeacherActivity(
+      user?.name || user?.email || 'Teacher',
+      user?.role || 'Teacher',
+      'RESULT_ENTRY',
+      `Updated ${selectedSubject} results for ${selectedClass}.`
+    );
+
     setSubjectScores({});
   };
 
@@ -461,6 +471,17 @@ const ResultsNigerian = ({ user }) => {
     
     setIsSending(false);
     alert(`Successfully sent ${successCount} result(s) to parents!`);
+
+    // Log the activity
+    if (successCount > 0) {
+      await supabaseService.logTeacherActivity(
+        user?.name || user?.email || 'Teacher',
+        user?.role || 'Teacher',
+        'EMAIL_SENT',
+        `Sent bulk result emails to ${successCount} parent(s) for ${term}.`
+      );
+    }
+
     setSelectedResultIds([]); // Clear selection after sending
   };
 

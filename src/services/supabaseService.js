@@ -52,6 +52,14 @@ export const supabaseService = {
 
       console.log('✅ Login successful for user:', user.email);
 
+      // Log the login activity
+      await supabaseService.logTeacherActivity(
+        user.email, // using email as we don't have name mapped here, or we can fetch teacher name, but email works
+        user.role,
+        'LOGIN',
+        'Logged into the portal successfully.'
+      );
+
       return {
         token: 'dummy-jwt-token',
         user: {
@@ -456,6 +464,48 @@ export const supabaseService = {
     } catch (error) {
       console.error('❌ Settings update error:', error.message);
       throw error;
+    }
+  },
+
+  // Teacher Activity Logging
+  async logTeacherActivity(teacherName, role, actionType, description, status = 'success') {
+    try {
+      // Allow it to fail gracefully if the table doesn't exist yet
+      const { error } = await supabase
+        .from('teacher_activities')
+        .insert([{
+          teacher_name: teacherName,
+          role: role,
+          action_type: actionType,
+          description: description,
+          status: status,
+          school_id: 1 // Default
+        }]);
+
+      if (error) {
+        console.warn('⚠️ Could not log activity (Table might not exist yet):', error.message);
+      }
+    } catch (e) {
+      console.warn('⚠️ Activity logging failed:', e.message);
+    }
+  },
+
+  async getTeacherActivities(limit = 100) {
+    try {
+      const { data, error } = await supabase
+        .from('teacher_activities')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.warn('⚠️ Could not fetch activities:', error.message);
+        return []; // Return empty array if table missing
+      }
+      return data || [];
+    } catch (e) {
+      console.warn('⚠️ Fetching activities failed:', e.message);
+      return [];
     }
   }
 }

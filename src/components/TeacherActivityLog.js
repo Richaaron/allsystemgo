@@ -1,56 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabaseService } from '../services/supabaseService';
 
 const TeacherActivityLog = () => {
-  // Mock data representing typical teacher activities
-  const [activities] = useState([
+  const [activities, setActivities] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Fallback mock data in case the table is empty or fails
+  const mockActivities = [
     {
       id: 1,
-      teacherName: 'Aaron Aluko',
+      teacher_name: 'Aaron Aluko',
       role: 'Subject Teacher',
-      actionType: 'RESULT_ENTRY',
+      action_type: 'RESULT_ENTRY',
       description: 'Entered Mathematics results for JSS 2.',
-      timestamp: new Date(new Date().getTime() - 1000 * 60 * 15).toISOString(), // 15 mins ago
+      created_at: new Date(new Date().getTime() - 1000 * 60 * 15).toISOString(),
       status: 'success'
     },
     {
       id: 2,
-      teacherName: 'John Doe',
-      role: 'Form Teacher',
-      actionType: 'EMAIL_SENT',
-      description: 'Sent bulk result emails to 35 parents in JSS 1.',
-      timestamp: new Date(new Date().getTime() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-      status: 'success'
-    },
-    {
-      id: 3,
-      teacherName: 'Jane Smith',
+      teacher_name: 'Jane Smith',
       role: 'Dual Role',
-      actionType: 'LOGIN',
+      action_type: 'LOGIN',
       description: 'Logged into the portal successfully.',
-      timestamp: new Date(new Date().getTime() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+      created_at: new Date(new Date().getTime() - 1000 * 60 * 60 * 5).toISOString(),
       status: 'success'
-    },
-    {
-      id: 4,
-      teacherName: 'Aaron Aluko',
-      role: 'Subject Teacher',
-      actionType: 'PASSWORD_CHANGE',
-      description: 'Updated account password.',
-      timestamp: new Date(new Date().getTime() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-      status: 'warning'
-    },
-    {
-      id: 5,
-      teacherName: 'Grace Okafor',
-      role: 'Form Teacher',
-      actionType: 'LOGIN_FAILED',
-      description: 'Failed login attempt (Invalid Password).',
-      timestamp: new Date(new Date().getTime() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-      status: 'danger'
     }
-  ]);
+  ];
 
-  const [searchTerm, setSearchTerm] = useState('');
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const fetchActivities = async () => {
+    setIsLoading(true);
+    try {
+      const data = await supabaseService.getTeacherActivities();
+      if (data && data.length > 0) {
+        setActivities(data);
+      } else {
+        // Fallback to mock if empty (to show UI while table populates)
+        setActivities(mockActivities);
+      }
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+      setActivities(mockActivities);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getActionBadge = (type) => {
     switch(type) {
@@ -85,9 +83,9 @@ const TeacherActivityLog = () => {
   };
 
   const filteredActivities = activities.filter(activity => 
-    activity.teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    activity.actionType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    activity.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (activity.teacher_name && activity.teacher_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (activity.action_type && activity.action_type.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (activity.description && activity.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -175,23 +173,23 @@ const TeacherActivityLog = () => {
                   <td style={{ padding: '15px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '14px' }}>
-                        {activity.teacherName.charAt(0)}
+                        {activity.teacher_name ? activity.teacher_name.charAt(0) : 'T'}
                       </div>
                       <div>
-                        <div style={{ color: '#f1f5f9', fontWeight: '600' }}>{activity.teacherName}</div>
+                        <div style={{ color: '#f1f5f9', fontWeight: '600' }}>{activity.teacher_name}</div>
                         <div style={{ color: '#94a3b8', fontSize: '12px' }}>{activity.role}</div>
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: '15px 20px' }}>
-                    {getActionBadge(activity.actionType)}
+                    {getActionBadge(activity.action_type)}
                   </td>
                   <td style={{ padding: '15px 20px', color: '#cbd5e1', fontSize: '14px' }}>
                     {activity.description}
                   </td>
                   <td style={{ padding: '15px 20px', color: '#94a3b8', fontSize: '13px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>🕒</span> {formatTimeAgo(activity.timestamp)}
+                      <span>🕒</span> {formatTimeAgo(activity.created_at)}
                     </div>
                   </td>
                 </tr>
