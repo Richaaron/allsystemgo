@@ -48,7 +48,20 @@ const Settings = ({ user }) => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
-      const apiUrl = `${config.apiUrl}/settings-get`;
+      
+      // Decode JWT to get school_id
+      let schoolId = 1;
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          schoolId = payload.school_id || 1;
+          console.log('Decoded school_id from token:', schoolId);
+        } catch (e) {
+          console.warn('Could not decode token:', e);
+        }
+      }
+      
+      const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
       
       console.log('Loading settings from:', apiUrl);
       
@@ -56,6 +69,7 @@ const Settings = ({ user }) => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': config.supabaseKey || '',
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
       });
@@ -76,27 +90,32 @@ const Settings = ({ user }) => {
         const data = await response.json();
         console.log('Settings data received:', data);
         
-        // Convert snake_case from API to camelCase for state
-        setResultSettings({
-          principalName: data.principal_name || '',
-          principalTitle: data.principal_title || 'Principal',
-          proprietressName: data.proprietress_name || '',
-          proprietressTitle: data.proprietress_title || 'Proprietress',
-          schoolMotto: data.school_motto || 'Excellence in Education Since 2009',
-          resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
-          resultFooter: data.result_footer || 'Approved by the Ministry of Education',
-          showGrades: data.show_grades !== false,
-          showPositions: data.show_positions !== false,
-          showRemarks: data.show_remarks !== false
-        });
+        // PostgREST returns an array, get first record
+        const settings = Array.isArray(data) ? data[0] : data;
+        
+        if (settings) {
+          // Convert snake_case from API to camelCase for state
+          setResultSettings({
+            principalName: settings.principal_name || '',
+            principalTitle: settings.principal_title || 'Principal',
+            proprietressName: settings.proprietress_name || '',
+            proprietressTitle: settings.proprietress_title || 'Proprietress',
+            schoolMotto: settings.school_motto || 'Excellence in Education Since 2009',
+            resultHeader: settings.result_header || 'FOLUSHO VICTORY SCHOOLS',
+            resultFooter: settings.result_footer || 'Approved by the Ministry of Education',
+            showGrades: settings.show_grades !== false,
+            showPositions: settings.show_positions !== false,
+            showRemarks: settings.show_remarks !== false
+          });
 
-        setSchoolProfile({
-          schoolName: 'Folusho Victory Schools',
-          schoolEmail: data.school_email || 'info@folushovictory.com',
-          schoolPhone: data.school_phone || '+234-800-000-0000',
-          schoolAddress: data.school_address || 'Kaduna, Kaduna State',
-          schoolMotto: data.school_motto || 'Excellence in Education Since 2009'
-        });
+          setSchoolProfile({
+            schoolName: 'Folusho Victory Schools',
+            schoolEmail: settings.school_email || 'info@folushovictory.com',
+            schoolPhone: settings.school_phone || '+234-800-000-0000',
+            schoolAddress: settings.school_address || 'Kaduna, Kaduna State',
+            schoolMotto: settings.school_motto || 'Excellence in Education Since 2009'
+          });
+        }
       } else {
         const errorText = await response.text();
         console.error('Settings API Error Response:', {
@@ -226,12 +245,25 @@ const Settings = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = `${config.apiUrl}/settings-update`;
+      
+      // Decode JWT to get school_id
+      let schoolId = 1;
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          schoolId = payload.school_id || 1;
+        } catch (e) {
+          console.warn('Could not decode token:', e);
+        }
+      }
+      
+      const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
       
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': config.supabaseKey || '',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
@@ -245,7 +277,7 @@ const Settings = ({ user }) => {
       console.log('School Profile Save - Response Status:', response.status);
       
       if (response.status === 401) {
-        console.error('401 Unauthorized on PUT - Details:', {
+        console.error('401 Unauthorized on PATCH - Details:', {
           status: response.status,
           statusText: response.statusText,
           url: response.url,
@@ -300,12 +332,25 @@ const Settings = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = `${config.apiUrl}/settings-update`;
+      
+      // Decode JWT to get school_id
+      let schoolId = 1;
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          schoolId = payload.school_id || 1;
+        } catch (e) {
+          console.warn('Could not decode token:', e);
+        }
+      }
+      
+      const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
       
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': config.supabaseKey || '',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({

@@ -12,9 +12,12 @@ const config = {
     anonKey: supabaseAnonKey
   },
 
-  // API Configuration - Using Supabase Edge Functions
-  apiUrl: `${supabaseUrl}/functions/v1`,
+  // API Configuration - Using Supabase PostgREST API
+  apiUrl: `${supabaseUrl}/rest/v1`,
   apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT) || 10000,
+  
+  // Supabase API Key for public access
+  supabaseKey: supabaseAnonKey,
   
   // Authentication
   sessionSecret: process.env.REACT_APP_SESSION_SECRET || 'nigerian-school-super-secret-key-2024-change-in-production',
