@@ -226,7 +226,7 @@ const TeacherClean = () => {
         alert(
           `Teacher Created Successfully!\n\n` +
           `Credentials sent to: ${formData.email}\n` +
-          (emailResult.success ? '(Email sent successfully)\n' : '(Email service not configured - please set up EmailJS)\n') +
+          (emailResult.success ? '(Email sent successfully)\n' : '(Email failed to send - please check logs)\n') +
           `\nUsername: ${generatedUsername}\n` +
           `Password: ${generatedPassword}\n\n` +
           `Please save these credentials securely.`

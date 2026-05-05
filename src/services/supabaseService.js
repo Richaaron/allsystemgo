@@ -209,6 +209,10 @@ export const supabaseService = {
       }
 
       if (error) {
+        if (error.code === '23505') {
+          console.warn('⚠️ Teacher user account already exists for this email.');
+          return { exists: true, email: userData.email };
+        }
         console.error('❌ Failed to create teacher user:', error);
         throw error;
       }
@@ -216,7 +220,9 @@ export const supabaseService = {
       console.log('✅ Teacher user account created:', data);
       return data;
     } catch (error) {
-      console.error('❌ Teacher user creation error:', error.message);
+      if (error.code !== '23505') {
+        console.error('❌ Teacher user creation error:', error.message);
+      }
       throw error;
     }
   },
