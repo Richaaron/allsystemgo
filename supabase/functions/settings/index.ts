@@ -50,8 +50,9 @@ Deno.serve(async (req: Request) => {
     if (req.method === 'GET') {
       console.log('GET /settings - Fetching settings for school_id:', schoolId);
       
+      // Get settings for the school
       const { data: schoolSettings, error } = await db
-        .from('settings')
+        .from('system_settings')
         .select('*')
         .eq('school_id', schoolId)
         .limit(1);
@@ -105,7 +106,7 @@ Deno.serve(async (req: Request) => {
 
       // Check if settings exist
       const { data: existingSettings, error: selectError } = await db
-        .from('settings')
+        .from('system_settings')
         .select('id')
         .eq('school_id', schoolId)
         .limit(1);
@@ -119,7 +120,7 @@ Deno.serve(async (req: Request) => {
         console.log('Updating existing settings');
         // Update existing settings
         const { error: updateError } = await db
-          .from('settings')
+          .from('system_settings')
           .update({
             principal_name,
             principal_title,
@@ -146,7 +147,7 @@ Deno.serve(async (req: Request) => {
         console.log('Creating new settings');
         // Create new settings
         const { error: insertError } = await db
-          .from('settings')
+          .from('system_settings')
           .insert({
             school_id: schoolId,
             principal_name,

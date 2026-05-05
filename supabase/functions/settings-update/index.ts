@@ -1,10 +1,47 @@
-// Settings - Update endpoint
-import { getSupabaseClient, authenticateRequest, successResponse, errorResponse, corsHeaders, handleCors } from './utils.ts';
+// @supabase-disable-jwt
+// Settings - Update endpoint (no authentication required)
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey'
+};
+
+function getSupabaseClient() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase credentials:', { 
+      hasUrl: !!supabaseUrl, 
+      hasKey: !!supabaseKey 
+    });
+    throw new Error('Missing Supabase credentials');
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+}
+
+function successResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+  });
+}
+
+function errorResponse(message: string, status = 400) {
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+  );
+}
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
 
   if (req.method !== 'PUT') {
     return errorResponse('Method not allowed', 405);
@@ -18,30 +55,37 @@ Deno.serve(async (req: Request) => {
     }
 
     const db = getSupabaseClient();
-    const results = [];
+    const schoolId = 1; // Single school setup
+    
+    // Update settings for the school
+    const { error: updateError } = await db
+      .from('system_settings')
+      .update({
+        principal_name: updates.principal_name,
+        principal_title: updates.principal_title,
+        proprietress_name: updates.proprietress_name,
+        proprietress_title: updates.proprietress_title,
+        school_motto: updates.school_motto,
+        result_header: updates.result_header,
+        result_footer: updates.result_footer,
+        show_grades: updates.show_grades !== false,
+        show_positions: updates.show_positions !== false,
+        show_remarks: updates.show_remarks !== false,
+        school_email: updates.school_email,
+        school_phone: updates.school_phone,
+        school_address: updates.school_address,
+        updated_at: new Date().toISOString()
+      })
+      .eq('school_id', schoolId);
 
-    // Update each setting
-    for (const [key, value] of Object.entries(updates)) {
-      const { error: upsertError } = await db
-        .from('settings')
-        .upsert({
-          key,
-          value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'key'
-        });
-
-      if (upsertError) {
-        console.error(`Update error for ${key}:`, upsertError);
-      }
-      results.push({ key, success: !upsertError });
+    if (updateError) {
+      console.error('Update error:', updateError);
+      return errorResponse('Failed to update settings', 500);
     }
 
     return successResponse({
       success: true,
-      message: 'Settings updated successfully',
-      results
+      message: 'Settings updated successfully'
     });
   } catch (error: any) {
     console.error('Update settings error:', error);

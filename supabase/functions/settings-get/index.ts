@@ -1,10 +1,47 @@
-// Settings - Get endpoint
-import { getSupabaseClient, authenticateRequest, successResponse, errorResponse, corsHeaders, handleCors } from './utils.ts';
+// @supabase-disable-jwt
+// Settings - Get endpoint (no authentication required)
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey'
+};
+
+function getSupabaseClient() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase credentials:', { 
+      hasUrl: !!supabaseUrl, 
+      hasKey: !!supabaseKey 
+    });
+    throw new Error('Missing Supabase credentials');
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+}
+
+function successResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+  });
+}
+
+function errorResponse(message: string, status = 400) {
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+  );
+}
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
 
   if (req.method !== 'GET') {
     return errorResponse('Method not allowed', 405);
@@ -13,9 +50,9 @@ Deno.serve(async (req: Request) => {
   try {
     const db = getSupabaseClient();
 
-    // Get all settings
+    // Get all settings from all schools
     const { data: settings, error } = await db
-      .from('settings')
+      .from('system_settings')
       .select('*');
 
     if (error) {

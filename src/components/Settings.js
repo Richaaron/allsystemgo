@@ -58,7 +58,7 @@ const Settings = ({ user }) => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.supabaseKey}`
+          'apikey': config.supabaseKey
         }
       });
 
@@ -279,7 +279,7 @@ const Settings = ({ user }) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.supabaseKey}`
+          'apikey': config.supabaseKey
         },
         body: JSON.stringify({
           principal_name: resultSettings.principalName,
