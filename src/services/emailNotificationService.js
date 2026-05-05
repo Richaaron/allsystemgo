@@ -50,7 +50,7 @@ export const emailNotificationService = {
           template_id: EMAILJS_CONFIG.templateId,
           user_id: EMAILJS_CONFIG.publicKey,
           template_params: {
-            to_name: ${teacherData.firstName} ,
+            to_name: teacherData.firstName + ' ' + teacherData.lastName,
             to_email: teacherData.email,
             username: teacherData.username,
             password: teacherData.password,
@@ -64,7 +64,7 @@ export const emailNotificationService = {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(EmailJS error: );
+        throw new Error('EmailJS error: ' + errorText);
       }
 
       console.log('Teacher welcome email sent to:', teacherData.email);
@@ -74,7 +74,7 @@ export const emailNotificationService = {
       console.error('Failed to send teacher welcome email:', error);
       return {
         success: false,
-        message: Failed to send email: 
+        message: 'Failed to send email: ' + error.message
       };
     }
   },
