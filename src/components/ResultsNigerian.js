@@ -105,12 +105,30 @@ const ResultsNigerian = ({ user }) => {
 
   const loadResultSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
+      // Try localStorage first
+      const savedSettings = localStorage.getItem('resultSettings');
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          setResultSettings({
+            principalName: parsed.principalName || '',
+            proprietressName: parsed.proprietressName || '',
+            resultHeader: parsed.resultHeader || 'FOLUSHO VICTORY SCHOOLS',
+            resultFooter: parsed.resultFooter || 'Approved by the Ministry of Education'
+          });
+          return;
+        } catch (e) {
+          console.warn('Stored settings are invalid, will attempt API fetch');
+        }
+      }
+
+      // Try API endpoint
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://oscuovpwpzjqtaczsems.supabase.co';
+      const functionsUrl = `${supabaseUrl}/functions/v1`;
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch(`${functionsUrl}/settings`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -125,18 +143,8 @@ const ResultsNigerian = ({ user }) => {
         });
       }
     } catch (error) {
-      console.error('Error loading result settings:', error);
-      // Try localStorage as fallback
-      const savedSettings = localStorage.getItem('resultSettings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        setResultSettings({
-          principalName: parsed.principalName || '',
-          proprietressName: parsed.proprietressName || '',
-          resultHeader: parsed.resultHeader || 'FOLUSHO VICTORY SCHOOLS',
-          resultFooter: parsed.resultFooter || 'Approved by the Ministry of Education'
-        });
-      }
+      console.warn('Could not load result settings from API, using defaults', error);
+      // Keep defaults if everything fails
     }
   };
 
