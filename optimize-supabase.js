@@ -57,13 +57,6 @@ export const optimizedSupabaseService = {
 
       console.log('✅ Login successful for user:', data.email);
       
-      // Update last login with optimized query
-      await supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', data.id)
-        .single()
-
       return {
         token: 'folusho-victory-jwt-token-' + Date.now(),
         user: {

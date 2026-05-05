@@ -94,11 +94,6 @@ export const DatabaseAuthService = {
         }
       }
 
-      // Update last login
-      await db.update(users)
-        .set({ lastLogin: new Date() })
-        .where(eq(users.id, user[0].id));
-
       return {
         success: true,
         data: {

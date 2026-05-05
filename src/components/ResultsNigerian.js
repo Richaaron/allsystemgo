@@ -116,51 +116,59 @@ const ResultsNigerian = ({ user }) => {
             resultHeader: parsed.resultHeader || 'FOLUSHO VICTORY SCHOOLS',
             resultFooter: parsed.resultFooter || 'Approved by the Ministry of Education'
           });
-          console.log('Loaded result settings from localStorage');
+          console.log('✓ Loaded result settings from localStorage');
           return;
         } catch (e) {
-          console.warn('Stored settings are invalid, will attempt API fetch:', e);
+          console.debug('Stored settings are invalid, using defaults');
         }
       }
 
-      // Try API endpoint
+      // Try API endpoint with proper error handling
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://oscuovpwpzjqtaczsems.supabase.co';
       const functionsUrl = `${supabaseUrl}/functions/v1`;
       
-      console.log('Fetching result settings from:', `${functionsUrl}/settings`);
-      
-      const response = await fetch(`${functionsUrl}/settings`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${functionsUrl}/settings`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          console.debug('Settings API returned error, using defaults');
+          return;
         }
-      });
 
-      console.log('Result settings response status:', response.status);
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.debug('Settings API did not return JSON');
+          return;
+        }
 
-      if (!response.ok) {
-        console.warn(`API returned status ${response.status}, using defaults`);
-        return;
+        const data = await response.json();
+        
+        setResultSettings({
+          principalName: data.principal_name || '',
+          proprietressName: data.proprietress_name || '',
+          resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
+          resultFooter: data.result_footer || 'Approved by the Ministry of Education'
+        });
+      } catch (fetchError) {
+        if (fetchError.name === 'AbortError') {
+          console.debug('Settings API request timeout');
+        } else {
+          console.debug('Could not fetch settings from API');
+        }
       }
-
-      // Check content-type before parsing JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn('API did not return JSON, using defaults');
-        return;
-      }
-
-      const data = await response.json();
-      console.log('Received settings from API:', data);
-      
-      setResultSettings({
-        principalName: data.principal_name || '',
-        proprietressName: data.proprietress_name || '',
-        resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
-        resultFooter: data.result_footer || 'Approved by the Ministry of Education'
-      });
     } catch (error) {
-      console.warn('Could not load result settings from API, using defaults:', error.message);
+      console.debug('Error in loadResultSettings:', error.message);
       // Keep defaults if everything fails
     }
   };
