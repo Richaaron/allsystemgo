@@ -265,5 +265,76 @@ export const supabaseService = {
 
     if (error) throw error
     return data
+  },
+
+  // Settings
+  async getSettings(schoolId = 1) {
+    try {
+      console.log('📋 Fetching settings for school_id:', schoolId);
+      
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('school_id', schoolId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Error fetching settings:', error);
+        throw error;
+      }
+
+      console.log('✅ Settings fetched successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Settings fetch error:', error.message);
+      throw error;
+    }
+  },
+
+  async updateSettings(schoolId, settingsData) {
+    try {
+      console.log('📝 Updating settings for school_id:', schoolId);
+      console.log('📊 Settings data:', settingsData);
+
+      // Try to update existing settings
+      const { data, error } = await supabase
+        .from('settings')
+        .update(settingsData)
+        .eq('school_id', schoolId)
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Error updating settings:', error);
+        throw error;
+      }
+
+      if (!data) {
+        // If no record was updated, create a new one
+        console.log('📌 Creating new settings record');
+        const { data: newData, error: insertError } = await supabase
+          .from('settings')
+          .insert([{
+            school_id: schoolId,
+            ...settingsData
+          }])
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('❌ Error creating settings:', insertError);
+          throw insertError;
+        }
+
+        console.log('✅ Settings created successfully:', newData);
+        return newData;
+      }
+
+      console.log('✅ Settings updated successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Settings update error:', error.message);
+      throw error;
+    }
   }
 }

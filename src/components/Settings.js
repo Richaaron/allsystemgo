@@ -49,89 +49,51 @@ const Settings = ({ user }) => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       
-      // Decode JWT to get school_id
-      let schoolId = 1;
-      if (token) {
-        try {
-          // Split token and decode payload
-          const parts = token.split('.');
-          if (parts.length === 3) {
-            // Add padding if needed for base64 decoding
-            const payload = parts[1];
-            const paddedPayload = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
-            const decoded = JSON.parse(atob(paddedPayload));
-            schoolId = decoded.school_id || 1;
-            console.log('Decoded school_id from token:', schoolId);
-          }
-        } catch (e) {
-          console.warn('Could not decode token:', e.message);
-        }
+      if (!token) {
+        console.warn('No token found');
+        setIsLoading(false);
+        return;
       }
+
+      console.log('Loading settings from backend API...');
       
-      const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
-      
-      console.log('Loading settings from:', apiUrl);
-      console.log('Supabase key present:', !!config.supabaseKey);
-      
-      const response = await fetch(apiUrl, {
+      // Call backend API endpoint
+      const response = await fetch(`${config.apiUrl}/settings`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'apikey': config.supabaseKey,
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      console.log('Settings API Response Status:', response.status);
-      console.log('Settings API Response URL:', response.url);
-
-      if (response.status === 401) {
-        console.error('401 Unauthorized - Details:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url
-        });
-        throw new Error('Unauthorized access to settings API');
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Settings data received:', data);
-        
-        // PostgREST returns an array, get first record
-        const settings = Array.isArray(data) ? data[0] : data;
-        
-        if (settings) {
-          // Convert snake_case from API to camelCase for state
-          setResultSettings({
-            principalName: settings.principal_name || '',
-            principalTitle: settings.principal_title || 'Principal',
-            proprietressName: settings.proprietress_name || '',
-            proprietressTitle: settings.proprietress_title || 'Proprietress',
-            schoolMotto: settings.school_motto || 'Excellence in Education Since 2009',
-            resultHeader: settings.result_header || 'FOLUSHO VICTORY SCHOOLS',
-            resultFooter: settings.result_footer || 'Approved by the Ministry of Education',
-            showGrades: settings.show_grades !== false,
-            showPositions: settings.show_positions !== false,
-            showRemarks: settings.show_remarks !== false
-          });
+      const data = await response.json();
 
-          setSchoolProfile({
-            schoolName: 'Folusho Victory Schools',
-            schoolEmail: settings.school_email || 'info@folushovictory.com',
-            schoolPhone: settings.school_phone || '+234-800-000-0000',
-            schoolAddress: settings.school_address || 'Kaduna, Kaduna State',
-            schoolMotto: settings.school_motto || 'Excellence in Education Since 2009'
-          });
-        }
-      } else {
-        const errorText = await response.text();
-        console.error('Settings API Error Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
+      if (data) {
+        // Convert snake_case from API to camelCase for state
+        setResultSettings({
+          principalName: data.principal_name || '',
+          principalTitle: data.principal_title || 'Principal',
+          proprietressName: data.proprietress_name || '',
+          proprietressTitle: data.proprietress_title || 'Proprietress',
+          schoolMotto: data.school_motto || 'Excellence in Education Since 2009',
+          resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
+          resultFooter: data.result_footer || 'Approved by the Ministry of Education',
+          showGrades: data.show_grades !== false,
+          showPositions: data.show_positions !== false,
+          showRemarks: data.show_remarks !== false
         });
-        throw new Error(`Settings API returned status ${response.status}`);
+
+        setSchoolProfile({
+          schoolName: 'Folusho Victory Schools',
+          schoolEmail: data.school_email || 'info@folushovictory.com',
+          schoolPhone: data.school_phone || '+234-800-000-0000',
+          schoolAddress: data.school_address || 'Kaduna, Kaduna State',
+          schoolMotto: data.school_motto || 'Excellence in Education Since 2009'
+        });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -269,53 +231,21 @@ const Settings = ({ user }) => {
           console.warn('Could not decode token:', e.message);
         }
       }
-      
-      const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
-      console.log('School Profile Save URL:', apiUrl);
-      console.log('Supabase key present:', !!config.supabaseKey);
-      
-      const response = await fetch(apiUrl, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': config.supabaseKey,
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
-        body: JSON.stringify({
-          school_email: schoolProfile.schoolEmail,
-          school_phone: schoolProfile.schoolPhone,
-          school_address: schoolProfile.schoolAddress,
-          school_motto: schoolProfile.schoolMotto
-        })
+
+      console.log('Saving school profile for school_id:', schoolId);
+
+      await supabaseService.updateSettings(schoolId, {
+        school_email: schoolProfile.schoolEmail,
+        school_phone: schoolProfile.schoolPhone,
+        school_address: schoolProfile.schoolAddress,
+        school_motto: schoolProfile.schoolMotto
       });
 
-      console.log('School Profile Save - Response Status:', response.status);
+      // Also save to localStorage for offline access
+      localStorage.setItem('schoolProfile', JSON.stringify(schoolProfile));
       
-      if (response.status === 401) {
-        console.error('401 Unauthorized on PATCH - Details:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-          token: token ? 'present' : 'missing'
-        });
-        throw new Error('Unauthorized - Session may have expired');
-      }
-
-      if (response.ok) {
-        // Also save to localStorage for offline access
-        localStorage.setItem('schoolProfile', JSON.stringify(schoolProfile));
-        
-        setSuccessMessage('School profile saved successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        const errorText = await response.text();
-        console.error('API Error Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
-        });
-        setErrors({ general: `Failed to save school profile (${response.status}). Please try again.` });
-      }
+      setSuccessMessage('School profile saved successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('School profile save error:', error);
       setErrors({ general: error.message || 'Failed to save school profile. Please try again.' });
@@ -348,32 +278,20 @@ const Settings = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       
-      // Decode JWT to get school_id
-      let schoolId = 1;
-      if (token) {
-        try {
-          const parts = token.split('.');
-          if (parts.length === 3) {
-            const payload = parts[1];
-            const paddedPayload = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
-            const decoded = JSON.parse(atob(paddedPayload));
-            schoolId = decoded.school_id || 1;
-          }
-        } catch (e) {
-          console.warn('Could not decode token:', e.message);
-        }
+      if (!token) {
+        setErrors({ general: 'Session expired. Please login again.' });
+        setIsSubmitting(false);
+        return;
       }
-      
-      const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
-      console.log('Result Settings Save URL:', apiUrl);
-      console.log('Supabase key present:', !!config.supabaseKey);
-      
-      const response = await fetch(apiUrl, {
-        method: 'PATCH',
+
+      console.log('Saving result settings via backend API...');
+
+      // Call backend API endpoint
+      const response = await fetch(`${config.apiUrl}/settings`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'apikey': config.supabaseKey,
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           principal_name: resultSettings.principalName,
@@ -389,18 +307,19 @@ const Settings = ({ user }) => {
         })
       });
 
-      if (response.ok) {
-        // Also save to localStorage for offline access
-        localStorage.setItem('resultSettings', JSON.stringify(resultSettings));
-        
-        setSuccessMessage('Result settings saved successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        setErrors({ general: 'Failed to save settings. Please try again.' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save settings');
       }
+
+      // Also save to localStorage for offline access
+      localStorage.setItem('resultSettings', JSON.stringify(resultSettings));
+      
+      setSuccessMessage('Result settings saved successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Settings save error:', error);
-      setErrors({ general: 'Failed to save settings. Please try again.' });
+      setErrors({ general: error.message || 'Failed to save settings. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
