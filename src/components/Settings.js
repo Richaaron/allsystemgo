@@ -144,8 +144,8 @@ const Settings = ({ user }) => {
         return;
       }
 
-      // Use Edge Function endpoint instead of REST API
-      const apiUrl = `${config.functionsUrl}/auth/change-password`;
+      // Use Edge Function endpoint
+      const apiUrl = `${config.functionsUrl}/auth-change-password`;
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
