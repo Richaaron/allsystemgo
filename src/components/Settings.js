@@ -42,6 +42,7 @@ const Settings = ({ user }) => {
   // Load saved settings on mount
   useEffect(() => {
     loadSettings();
+    // Force Netlify redeploy with simplified settings function
   }, []);
 
   const loadSettings = async () => {
