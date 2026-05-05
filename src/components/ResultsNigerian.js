@@ -14,6 +14,10 @@ const ResultsNigerian = ({ user }) => {
     resultFooter: 'Approved by the Ministry of Education'
   });
   const [printingResultId, setPrintingResultId] = useState(null);
+  const [activeView, setActiveView] = useState(user?.role === 'subject_teacher' ? 'subject' : 'class');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
+  const [subjectScores, setSubjectScores] = useState({});
 
   // Sample students with their registered subjects
   const sampleStudents = [
@@ -377,15 +381,15 @@ const ResultsNigerian = ({ user }) => {
     }
 
     switch (user.role) {
-      case 'Form Teacher':
+      case 'form_teacher':
         return results.filter(result => result.studentClass === 'JSS 2');
-      case 'Subject Teacher':
+      case 'subject_teacher':
         return results.filter(result => {
           return result.subjects.some(subject => 
             ['Mathematics', 'Physics'].includes(subject.name)
           );
         });
-      case 'Dual Role':
+      case 'dual_role':
         return results.filter(result => 
           result.studentClass === 'SSS 1' || 
           result.subjects.some(subject => 
@@ -399,6 +403,26 @@ const ResultsNigerian = ({ user }) => {
 
   const filteredResults = getFilteredResults();
   const overallScores = calculateOverallScores();
+
+  const handleSubjectScoreChange = (studentId, fieldType, value) => {
+    const numValue = Math.min(parseInt(value) || 0, fieldType === 'exam' ? 60 : 20);
+    if (numValue < 0) return;
+
+    setSubjectScores(prev => {
+      const studentScores = prev[studentId] || { ca1: '', ca2: '', exam: '', total: 0, grade: 'F' };
+      const updated = { ...studentScores, [fieldType]: numValue };
+      const total = (parseInt(updated.ca1) || 0) + (parseInt(updated.ca2) || 0) + (parseInt(updated.exam) || 0);
+      updated.total = total;
+      updated.grade = getGrade(total);
+      return { ...prev, [studentId]: updated };
+    });
+  };
+
+  const handleSaveSubjectScores = () => {
+    alert(`Subject results for ${selectedSubject} in ${selectedClass} saved successfully!`);
+    setSubjectScores({});
+  };
+
 
   // Render print view for a result
   const renderPrintView = (result) => (
@@ -710,13 +734,19 @@ const ResultsNigerian = ({ user }) => {
     </div>
   );
 
+  const teacherClasses = [...new Set(students.map(s => s.studentClass))];
+  const teacherSubjects = ['Mathematics', 'Physics', 'Chemistry', 'English Language', 'Basic Science']; // Mock assigned subjects
+  const studentsInSelectedClass = students.filter(s => s.studentClass === selectedClass);
+
   return (
     <div style={{ padding: '20px' }}>
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '20px'
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '15px'
       }}>
         <div>
           <h2 style={{ color: '#f1f5f9', fontSize: '1.8rem', marginBottom: '5px' }}>Results Management</h2>
@@ -726,6 +756,40 @@ const ResultsNigerian = ({ user }) => {
             </p>
           )}
         </div>
+
+        {user?.role === 'dual_role' && (
+          <div style={{ display: 'flex', gap: '10px', background: 'rgba(30, 41, 59, 0.8)', padding: '5px', borderRadius: '8px' }}>
+            <button
+              onClick={() => setActiveView('class')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                background: activeView === 'class' ? '#3b82f6' : 'transparent',
+                color: activeView === 'class' ? 'white' : '#94a3b8',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              Class Result View
+            </button>
+            <button
+              onClick={() => setActiveView('subject')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                background: activeView === 'subject' ? '#3b82f6' : 'transparent',
+                color: activeView === 'subject' ? 'white' : '#94a3b8',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              Subject Result View
+            </button>
+          </div>
+        )}
+
         <select
           value={term}
           onChange={(e) => setTerm(e.target.value)}
@@ -744,54 +808,138 @@ const ResultsNigerian = ({ user }) => {
         </select>
       </div>
 
-      {/* Student Selection */}
-      <div style={{
-        background: 'rgba(30, 41, 59, 0.8)',
-        borderRadius: '8px',
-        padding: '20px',
-        marginBottom: '20px'
-      }}>
-        <h3 style={{ color: '#f1f5f9', marginBottom: '15px' }}>Select Student for Result Entry</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
-          {students.map(student => (
-            <div
-              key={student.id}
-              onClick={() => handleStudentSelect(student)}
-              style={{
-                background: 'rgba(51, 65, 85, 0.5)',
-                border: '2px solid rgba(148, 163, 184, 0.3)',
-                borderRadius: '8px',
-                padding: '15px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.background = 'rgba(59, 130, 246, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.borderColor = 'rgba(148, 163, 184, 0.3)';
-                e.target.style.background = 'rgba(51, 65, 85, 0.5)';
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                <span style={{ color: '#f1f5f9', fontWeight: '600' }}>
-                  {student.firstName} {student.lastName}
-                </span>
-                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-                  {student.admissionNumber}
-                </span>
-              </div>
-              <div style={{ color: '#60a5fa', fontSize: '0.9rem', marginBottom: '5px' }}>
-                {student.studentClass}
-              </div>
-              <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-                {student.registeredSubjects.length} subjects
-              </div>
+      {activeView === 'class' ? (
+        <>
+          {/* Student Selection (Form Teacher View) */}
+          <div style={{
+            background: 'rgba(30, 41, 59, 0.8)',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ color: '#f1f5f9', marginBottom: '15px' }}>Select Student for Result Entry</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
+              {students.map(student => (
+                <div
+                  key={student.id}
+                  onClick={() => handleStudentSelect(student)}
+                  style={{
+                    background: 'rgba(51, 65, 85, 0.5)',
+                    border: '2px solid rgba(148, 163, 184, 0.3)',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+                    e.target.style.background = 'rgba(51, 65, 85, 0.5)';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                    <span style={{ color: '#f1f5f9', fontWeight: '600' }}>
+                      {student.firstName} {student.lastName}
+                    </span>
+                    <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                      {student.admissionNumber}
+                    </span>
+                  </div>
+                  <div style={{ color: '#60a5fa', fontSize: '0.9rem', marginBottom: '5px' }}>
+                    {student.studentClass}
+                  </div>
+                  <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                    {student.registeredSubjects.length} subjects
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Subject Result View (Subject Teacher / Dual Role) */}
+          <div style={{
+            background: 'rgba(30, 41, 59, 0.8)',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ color: '#f1f5f9', marginBottom: '15px' }}>Subject Result Entry</h3>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                style={{ padding: '10px', borderRadius: '6px', background: 'rgba(51, 65, 85, 0.5)', border: '1px solid rgba(148, 163, 184, 0.3)', color: '#fff' }}
+              >
+                <option value="">-- Select Class --</option>
+                {teacherClasses.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                style={{ padding: '10px', borderRadius: '6px', background: 'rgba(51, 65, 85, 0.5)', border: '1px solid rgba(148, 163, 184, 0.3)', color: '#fff' }}
+              >
+                <option value="">-- Select Subject --</option>
+                {teacherSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            {selectedClass && selectedSubject && (
+              <div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e2e8f0', marginBottom: '20px' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(51, 65, 85, 0.8)' }}>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Student Name</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>1st CA (20)</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>2nd CA (20)</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Exam (60)</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Total</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentsInSelectedClass.map(student => {
+                      const scores = subjectScores[student.id] || { ca1: '', ca2: '', exam: '', total: 0, grade: '-' };
+                      return (
+                        <tr key={student.id} style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)' }}>
+                          <td style={{ padding: '12px' }}>{student.firstName} {student.lastName}</td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <input type="number" max="20" min="0" value={scores.ca1} onChange={(e) => handleSubjectScoreChange(student.id, 'ca1', e.target.value)} style={{ width: '60px', padding: '5px', borderRadius: '4px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(148, 163, 184, 0.3)', color: 'white', textAlign: 'center' }} />
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <input type="number" max="20" min="0" value={scores.ca2} onChange={(e) => handleSubjectScoreChange(student.id, 'ca2', e.target.value)} style={{ width: '60px', padding: '5px', borderRadius: '4px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(148, 163, 184, 0.3)', color: 'white', textAlign: 'center' }} />
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <input type="number" max="60" min="0" value={scores.exam} onChange={(e) => handleSubjectScoreChange(student.id, 'exam', e.target.value)} style={{ width: '60px', padding: '5px', borderRadius: '4px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(148, 163, 184, 0.3)', color: 'white', textAlign: 'center' }} />
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#60a5fa' }}>{scores.total}</td>
+                          <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: getGradeColor(scores.grade) }}>{scores.grade}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <div style={{ textAlign: 'right' }}>
+                  <button onClick={handleSaveSubjectScores} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    Save Subject Results
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {!selectedClass || !selectedSubject ? (
+              <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px' }}>Please select a Class and Subject to enter results.</p>
+            ) : studentsInSelectedClass.length === 0 ? (
+              <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px' }}>No students found in the selected class.</p>
+            ) : null}
+          </div>
+        </>
+      )}
 
       {/* Results Entry Form */}
       {showForm && selectedStudent && (
