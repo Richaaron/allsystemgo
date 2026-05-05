@@ -120,15 +120,36 @@ export const supabaseService = {
   },
 
   async updateTeacher(id, teacherData) {
-    const { data, error } = await supabase
+    let data, error;
+
+    const result = await supabase
       .from('teachers')
       .update(teacherData)
       .eq('id', id)
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    data = result.data;
+    error = result.error;
+
+    // If updated_at column is missing, retry without it
+    if (error && error.message && error.message.includes('updated_at')) {
+      console.log('⚠️ updated_at column missing in teachers, retrying without it...');
+      const { updated_at, ...restData } = teacherData;
+
+      const result2 = await supabase
+        .from('teachers')
+        .update(restData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      data = result2.data;
+      error = result2.error;
+    }
+
+    if (error) throw error;
+    return data;
   },
 
   async deleteTeacher(id) {
@@ -146,7 +167,10 @@ export const supabaseService = {
     try {
       console.log('👤 Creating teacher user account:', userData.email);
 
-      const { data, error } = await supabase
+      let data, error;
+
+      // Try with school_id first
+      const result = await supabase
         .from('users')
         .insert({
           email: userData.email,
@@ -159,6 +183,30 @@ export const supabaseService = {
         })
         .select()
         .single();
+
+      data = result.data;
+      error = result.error;
+
+      // If school_id column is missing, retry without it
+      if (error && error.message && error.message.includes('school_id')) {
+        console.log('⚠️ school_id column missing in users table, retrying without it...');
+
+        const result2 = await supabase
+          .from('users')
+          .insert({
+            email: userData.email,
+            password: userData.password,
+            role: 'teacher',
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        data = result2.data;
+        error = result2.error;
+      }
 
       if (error) {
         console.error('❌ Failed to create teacher user:', error);
