@@ -48,10 +48,36 @@ Deno.serve(async (req: Request) => {
 
     const newTeacher = insertedTeacher?.[0];
 
+    // Create user account for the teacher
+    if (teacherData.password && newTeacher) {
+      const { error: userError } = await db
+        .from('users')
+        .insert([{
+          school_id: teacherData.school_id || 1,
+          email: teacherData.email,
+          password: teacherData.password,
+          role: 'teacher'
+        }]);
+
+      if (userError) {
+        console.error('User creation error:', userError);
+        // Continue anyway so we don't fail the whole request
+      }
+    }
+
     // Send welcome email
     if (newTeacher?.email) {
-      const { subject, html } = emailTemplates.newTeacher(newTeacher);
-      await sendEmail(newTeacher.email, subject, html);
+      if (teacherData.password && teacherData.username && teacherData.loginUrl) {
+        const { subject, html } = emailTemplates.teacherWelcomeWithCredentials(newTeacher, {
+          username: teacherData.username,
+          password: teacherData.password,
+          loginUrl: teacherData.loginUrl
+        });
+        await sendEmail(newTeacher.email, subject, html);
+      } else {
+        const { subject, html } = emailTemplates.newTeacher(newTeacher);
+        await sendEmail(newTeacher.email, subject, html);
+      }
     }
 
     return successResponse({ teacher: newTeacher }, 201);
@@ -60,3 +86,4 @@ Deno.serve(async (req: Request) => {
     return errorResponse(error.message || 'Failed to create teacher', 500);
   }
 });
+

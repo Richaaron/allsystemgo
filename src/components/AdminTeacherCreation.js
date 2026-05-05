@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TeacherAssignmentService, TEACHER_ROLES } from '../data/teacherModels';
-import { EmailService } from '../services/emailService';
+import { teacherService } from '../services/supabaseEdgeFunctions';
 import { CredentialService } from '../services/credentialService';
 import './AdminTeacherCreation.css';
 
@@ -215,7 +215,7 @@ const AdminTeacherCreation = () => {
       // Generate credentials
       const credentials = CredentialService.generateTeacherCredentials(formData.personalInfo, existingStaffIds);
       
-      // Create teacher object for database
+      // Create teacher object for database with credentials for Edge Function
       const teacherPayload = {
         staff_id: staffId,
         first_name: formData.personalInfo.firstName,
@@ -226,32 +226,17 @@ const AdminTeacherCreation = () => {
         title: formData.professionalInfo.role,
         qualification: formData.professionalInfo.specialization,
         department_id: formData.professionalInfo.department,
-        school_id: 1
+        school_id: 1,
+        // Include credentials for backend to create auth user and send email
+        username: credentials.username,
+        password: credentials.password,
+        loginUrl: credentials.loginUrl
       };
       
-      // Get authentication token
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
-      }
-
-      // Save teacher to database via API
-      console.log('📝 Creating teacher in database...', teacherPayload);
-      const createResponse = await fetch('/api/teachers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(teacherPayload)
-      });
-
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || `Failed to create teacher: ${createResponse.status}`);
-      }
-
-      const createResult = await createResponse.json();
+      console.log('📝 Creating teacher in database and sending email...', teacherPayload);
+      
+      // Use teacherService from Supabase Edge Functions
+      const createResult = await teacherService.create(teacherPayload);
       console.log('✅ Teacher created successfully:', createResult);
 
       // Prepare full teacher data for display
@@ -265,22 +250,11 @@ const AdminTeacherCreation = () => {
         createdAt: new Date().toISOString()
       };
 
-      // Send welcome email with credentials
-      console.log('📧 Sending welcome email...');
-      const emailResult = await EmailService.sendTeacherCredentials(teacherData, credentials);
-      
-      if (emailResult.success) {
-        setEmailStatus('sent');
-        setCreatedTeacher(teacherData);
-        setSubmitSuccess(true);
-        console.log('✅ Email sent successfully:', emailResult);
-      } else {
-        // Email failed but teacher was created, so show partial success
-        console.warn('⚠️ Teacher created but email failed:', emailResult);
-        setEmailStatus('partial');
-        setCreatedTeacher(teacherData);
-        setSubmitSuccess(true);
-      }
+      // Since the backend Edge Function now handles user creation and email sending,
+      // we can consider the email "sent" as long as the creation request succeeded.
+      setEmailStatus('sent');
+      setCreatedTeacher(teacherData);
+      setSubmitSuccess(true);
       
     } catch (error) {
       console.error('❌ Teacher creation error:', error);

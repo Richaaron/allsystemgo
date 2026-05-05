@@ -19,6 +19,19 @@ export function getSupabaseClient() {
 // Verify token
 export function verifyToken(token: string): any {
   try {
+    // Handle dummy tokens (for development/frontend client-side login)
+    if (token === 'dummy-jwt-token' || token.startsWith('dummy-')) {
+      console.log('Dummy token detected - using default user context');
+      // Return a generic user object for dummy tokens
+      // The actual user will be fetched from the request context or headers
+      return {
+        id: 'temp-user',
+        email: 'temp@app.com',
+        role: 'user',
+        isDummy: true
+      };
+    }
+    
     // Handle tokens in format: token_<base64_payload>_<timestamp>
     if (token.startsWith('token_')) {
       console.log('App token detected');
