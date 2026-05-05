@@ -53,12 +53,11 @@ const Settings = ({ user }) => {
       console.log('Supabase Key available:', !!config.supabaseKey);
       console.log('Supabase Key length:', config.supabaseKey?.length || 0);
       
-      // Call Supabase Edge Function with ANON key
+      // Call Supabase Edge Function (JWT verification disabled)
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'apikey': config.supabaseKey
+          'Content-Type': 'application/json'
         }
       });
 
@@ -274,12 +273,11 @@ const Settings = ({ user }) => {
     try {
       console.log('Saving result settings to Supabase Edge Function...');
 
-      // Call Supabase Edge Function to update settings
+      // Call Supabase Edge Function to update settings (JWT verification disabled)
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'apikey': config.supabaseKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           principal_name: resultSettings.principalName,

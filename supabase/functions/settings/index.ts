@@ -1,5 +1,4 @@
-// @supabase-disable-jwt
-// Settings endpoint - GET and PUT (no authentication required)
+// Settings endpoint - GET and PUT (no authentication required - JWT verification disabled)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
