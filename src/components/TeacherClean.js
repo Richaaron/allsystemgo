@@ -486,67 +486,6 @@ const TeacherClean = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Date of Birth *</label>
-                  <input
-                    type="date"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      background: 'rgba(51, 65, 85, 0.5)',
-                      border: '2px solid rgba(148, 163, 184, 0.3)',
-                      borderRadius: '8px',
-                      color: '#f1f5f9',
-                      fontSize: '1rem'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Employment Date *</label>
-                  <input
-                    type="date"
-                    name="employmentDate"
-                    value={formData.employmentDate}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      background: 'rgba(51, 65, 85, 0.5)',
-                      border: '2px solid rgba(148, 163, 184, 0.3)',
-                      borderRadius: '8px',
-                      color: '#f1f5f9',
-                      fontSize: '1rem'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Address *</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    background: 'rgba(51, 65, 85, 0.5)',
-                    border: '2px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    color: '#f1f5f9',
-                    fontSize: '1rem'
-                  }}
-                />
-              </div>
-
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Department *</label>
                 <select
@@ -569,37 +508,6 @@ const TeacherClean = () => {
                     <option key={dept} value={dept}>{dept}</option>
                   ))}
                 </select>
-              </div>
-
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Qualifications *</label>
-                <select
-                  name="qualifications"
-                  value={formData.qualifications}
-                  onChange={(e) => {
-                    const selectedQualifications = Array.from(e.target.selectedOptions, option => option.value);
-                    setFormData(prev => ({ ...prev, qualifications: selectedQualifications }));
-                  }}
-                  multiple
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    background: 'rgba(51, 65, 85, 0.5)',
-                    border: '2px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    color: '#f1f5f9',
-                    fontSize: '1rem',
-                    minHeight: '80px'
-                  }}
-                >
-                  {qualifications.map(qual => (
-                    <option key={qual} value={qual}>{qual}</option>
-                  ))}
-                </select>
-                <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '5px' }}>
-                  Hold Ctrl/Cmd to select multiple qualifications
-                </p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
