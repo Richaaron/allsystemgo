@@ -123,6 +123,25 @@ const TeacherClean = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Generate username from first and last name
+  const generateUsername = (firstName, lastName) => {
+    if (!firstName || !lastName) return '';
+    const cleanFirst = firstName.toLowerCase().replace(/[^a-z]/g, '');
+    const cleanLast = lastName.toLowerCase().replace(/[^a-z]/g, '');
+    const randomNum = Math.floor(Math.random() * 900) + 100;
+    return `${cleanFirst}.${cleanLast}${randomNum}`;
+  };
+
+  // Generate password
+  const generatePassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const handleSubjectChange = (e) => {
     const selectedSubjects = Array.from(e.target.selectedOptions, option => option.value);
     setFormData(prev => ({ ...prev, subjects: selectedSubjects }));
@@ -130,22 +149,43 @@ const TeacherClean = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
+    // Basic validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.department || !formData.role || formData.subjects.length === 0) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     if (editingTeacher) {
       // Update existing teacher
-      setTeachers(prev => prev.map(teacher => 
-        teacher.id === editingTeacher.id 
+      setTeachers(prev => prev.map(teacher =>
+        teacher.id === editingTeacher.id
           ? { ...teacher, ...formData }
           : teacher
       ));
     } else {
-      // Add new teacher
+      // Generate credentials for new teacher
+      const generatedUsername = generateUsername(formData.firstName, formData.lastName);
+      const generatedPassword = generatePassword();
+
+      // Add new teacher with credentials
       const newTeacher = {
         id: teachers.length + 1,
         staffId: formData.staffId || generateStaffId(),
+        username: generatedUsername,
+        password: generatedPassword,
         ...formData
       };
       setTeachers(prev => [...prev, newTeacher]);
+
+      // Show credentials that will be sent to teacher's email
+      alert(
+        `Teacher Created Successfully!\n\n` +
+        `Credentials will be sent to: ${formData.email}\n\n` +
+        `Username: ${generatedUsername}\n` +
+        `Password: ${generatedPassword}\n\n` +
+        `Please save these credentials securely.`
+      );
     }
 
     // Reset form
@@ -403,13 +443,14 @@ const TeacherClean = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                 <div>
-                  <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Email</label>
+                  <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Email *</label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Auto-generated if empty"
+                    required
+                    placeholder="Teacher's personal email address"
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -420,6 +461,9 @@ const TeacherClean = () => {
                       fontSize: '1rem'
                     }}
                   />
+                  <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '5px' }}>
+                    Credentials will be sent to this email
+                  </p>
                 </div>
                 <div>
                   <label style={{ display: 'block', color: '#e2e8f0', marginBottom: '5px' }}>Phone *</label>
