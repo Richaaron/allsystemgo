@@ -425,314 +425,309 @@ const ResultsNigerian = ({ user }) => {
 
 
   // Render print view for a result
-  const renderPrintView = (result) => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.8)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 9999
-    }}>
+  const renderPrintView = (result) => {
+    // Calculate position
+    const classResults = results.filter(r => r.studentClass === result.studentClass && r.term === result.term);
+    const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
+    const position = sorted.findIndex(r => r.id === result.id) + 1;
+    const positionText = getPositionOrdinal(position);
+
+    return (
       <div style={{
-        background: 'white',
-        color: '#1f2937',
-        padding: '40px',
-        borderRadius: '8px',
-        width: '90%',
-        maxWidth: '900px',
-        maxHeight: '90vh',
-        overflow: 'auto'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        padding: '40px 0',
+        zIndex: 9999,
+        overflowY: 'auto'
       }}>
-        {/* Close Button */}
-        <button
-          onClick={() => setPrintingResultId(null)}
-          style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            background: '#ef4444',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            cursor: 'pointer',
-            fontSize: '20px',
-            fontWeight: 'bold'
-          }}
-        >
-          ✕
-        </button>
-
-        {/* Print Header */}
-        <div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '3px solid #1f2937', paddingBottom: '20px' }}>
-          <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: 'bold' }}>
-            {resultSettings.resultHeader}
-          </h2>
-          <p style={{ margin: '5px 0', fontSize: '14px', fontStyle: 'italic' }}>
-            Academic Result Slip
-          </p>
-        </div>
-
-        {/* Student Information */}
-        <div style={{ marginBottom: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-          <div>
-            <p style={{ margin: '5px 0', fontSize: '14px' }}>
-              <strong>Student Name:</strong> {result.studentName}
-            </p>
-            <p style={{ margin: '5px 0', fontSize: '14px' }}>
-              <strong>Class:</strong> {result.studentClass}
-            </p>
-          </div>
-          <div>
-            <p style={{ margin: '5px 0', fontSize: '14px' }}>
-              <strong>Term:</strong> {result.term}
-            </p>
-            <p style={{ margin: '5px 0', fontSize: '14px' }}>
-              <strong>Date:</strong> {new Date().toLocaleDateString()}
-            </p>
-          </div>
-          <div style={{ textAlign: 'center', backgroundColor: '#fef3c7', padding: '15px', borderRadius: '6px' }}>
-            <p style={{ margin: '5px 0', fontSize: '12px', color: '#92400e' }}>
-              <strong>Class Position</strong>
-            </p>
-            <p style={{ margin: '5px 0', fontSize: '28px', fontWeight: 'bold', color: '#d97706' }}>
-              {(() => {
-                const classResults = results.filter(
-                  r => r.studentClass === result.studentClass && r.term === result.term
-                );
-                const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
-                const position = sorted.findIndex(r => r.id === result.id) + 1;
-                return `${getPositionOrdinal(position)}`;
-              })()}
-            </p>
-            <p style={{ margin: '5px 0', fontSize: '12px', color: '#92400e' }}>
-              out of {(() => {
-                const classResults = results.filter(
-                  r => r.studentClass === result.studentClass && r.term === result.term
-                );
-                return classResults.length;
-              })()}
-            </p>
-          </div>
-        </div>
-
-        {/* Results Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '30px' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #1f2937' }}>
-              <th style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>Subject</th>
-              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>CA1</th>
-              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>CA2</th>
-              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>Exam</th>
-              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>Total</th>
-              <th style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.subjects.map((subject, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                <td style={{ padding: '10px', textAlign: 'left' }}>{subject.name}</td>
-                <td style={{ padding: '10px', textAlign: 'center' }}>{subject.ca1}</td>
-                <td style={{ padding: '10px', textAlign: 'center' }}>{subject.ca2}</td>
-                <td style={{ padding: '10px', textAlign: 'center' }}>{subject.exam}</td>
-                <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>{subject.total}</td>
-                <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#ef4444' }}>
-                  {subject.grade}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Overall Summary */}
-        <div style={{ 
-          background: '#f3f4f6', 
-          padding: '15px', 
-          borderRadius: '6px', 
-          marginBottom: '30px',
-          textAlign: 'center'
+        <div className="premium-print-container" style={{
+          background: 'white',
+          color: '#0f172a',
+          padding: '50px',
+          borderRadius: '8px',
+          width: '90%',
+          maxWidth: '900px',
+          margin: 'auto',
+          position: 'relative',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          fontFamily: "'Montserrat', sans-serif"
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-            <div>
-              <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
-                <strong>Overall Average:</strong>
-              </p>
-              <p style={{ margin: '5px 0', fontSize: '18px', fontWeight: 'bold', color: '#2563eb' }}>
-                {result.overallAverage.toFixed(2)}
-              </p>
-            </div>
-            <div>
-              <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
-                <strong>Overall Grade:</strong>
-              </p>
-              <p style={{ margin: '5px 0', fontSize: '18px', fontWeight: 'bold', color: '#2563eb' }}>
-                {result.overallGrade}
-              </p>
-            </div>
-            <div>
-              <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
-                <strong>Class Position:</strong>
-              </p>
-              <p style={{ margin: '5px 0', fontSize: '18px', fontWeight: 'bold', color: '#d97706' }}>
-                {(() => {
-                  const classResults = results.filter(
-                    r => r.studentClass === result.studentClass && r.term === result.term
-                  );
-                  const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
-                  const position = sorted.findIndex(r => r.id === result.id) + 1;
-                  return `${getPositionOrdinal(position)} of ${sorted.length}`;
-                })()}
-              </p>
-            </div>
-          </div>
-        </div>
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+            
+            .premium-print-container {
+              position: relative;
+              background-image: radial-gradient(rgba(30, 58, 138, 0.03) 2px, transparent 2px);
+              background-size: 30px 30px;
+            }
+            .premium-print-container::before {
+              content: 'FVS';
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 250px;
+              font-family: 'Playfair Display', serif;
+              color: rgba(30, 58, 138, 0.04);
+              pointer-events: none;
+              z-index: 0;
+            }
+            .content-wrapper {
+              position: relative;
+              z-index: 1;
+            }
+            .premium-header {
+              font-family: 'Playfair Display', serif;
+              color: #1e3a8a;
+            }
+            .gold-accent {
+              color: #d97706;
+            }
+            .premium-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            }
+            .premium-table th {
+              background-color: #1e3a8a;
+              color: #d97706;
+              font-family: 'Montserrat', sans-serif;
+              font-weight: 700;
+              padding: 14px 15px;
+              text-transform: uppercase;
+              font-size: 12px;
+              letter-spacing: 1px;
+            }
+            .premium-table td {
+              padding: 12px 15px;
+              border-bottom: 1px solid #e2e8f0;
+              font-size: 14px;
+            }
+            .premium-table tr:nth-child(even) {
+              background-color: #f8fafc;
+            }
+            .premium-table tr:last-child td {
+              border-bottom: 2px solid #1e3a8a;
+            }
+            @media print {
+              body * { visibility: hidden; }
+              .premium-print-container, .premium-print-container * {
+                visibility: visible;
+              }
+              .premium-print-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+                box-shadow: none;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .no-print { display: none !important; }
+            }
+          `}</style>
 
-        {/* Signatures Section */}
-        <div style={{ marginTop: '60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-          {/* Principal Signature */}
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              border: '2px dashed #1f2937',
-              borderRadius: '8px',
-              padding: '30px 20px',
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05))',
-              position: 'relative',
-              marginBottom: '15px'
-            }}>
-              {/* Signature Line */}
-              <div style={{
-                borderTop: '3px solid #1f2937',
-                width: '140px',
-                margin: '0 auto 15px',
-                paddingTop: '10px'
-              }}>
-                <div style={{
-                  fontSize: '28px',
-                  fontStyle: 'italic',
-                  fontWeight: 'bold',
-                  color: '#1f2937',
-                  letterSpacing: '2px',
-                  fontFamily: 'Brush Script MT, cursive, serif',
-                  lineHeight: '1.2'
-                }}>
-                  {resultSettings.principalName ? resultSettings.principalName.split(' ')[0] : 'Signature'}
-                </div>
-              </div>
-              
-              {/* Title and Name */}
-              <p style={{ margin: '8px 0 4px 0', fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>
-                {resultSettings.principalName || 'Principal Name'}
-              </p>
-              <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Principal
-              </p>
-              
-              {/* Date */}
-              <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#9ca3af' }}>
-                Date: _________________
-              </p>
-            </div>
-          </div>
-
-          {/* Proprietress Signature */}
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              border: '2px dashed #1f2937',
-              borderRadius: '8px',
-              padding: '30px 20px',
-              background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(168, 85, 247, 0.05))',
-              position: 'relative',
-              marginBottom: '15px'
-            }}>
-              {/* Signature Line */}
-              <div style={{
-                borderTop: '3px solid #1f2937',
-                width: '140px',
-                margin: '0 auto 15px',
-                paddingTop: '10px'
-              }}>
-                <div style={{
-                  fontSize: '28px',
-                  fontStyle: 'italic',
-                  fontWeight: 'bold',
-                  color: '#1f2937',
-                  letterSpacing: '2px',
-                  fontFamily: 'Brush Script MT, cursive, serif',
-                  lineHeight: '1.2'
-                }}>
-                  {resultSettings.proprietressName ? resultSettings.proprietressName.split(' ')[0] : 'Signature'}
-                </div>
-              </div>
-              
-              {/* Title and Name */}
-              <p style={{ margin: '8px 0 4px 0', fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>
-                {resultSettings.proprietressName || 'Proprietress Name'}
-              </p>
-              <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Proprietress
-              </p>
-              
-              {/* Date */}
-              <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#9ca3af' }}>
-                Date: _________________
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center',
-          marginTop: '30px',
-          paddingTop: '20px',
-          borderTop: '2px solid #1f2937',
-          fontSize: '12px',
-          color: '#666'
-        }}>
-          <p style={{ margin: '5px 0' }}>{resultSettings.resultFooter}</p>
-        </div>
-
-        {/* Print Button */}
-        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+          {/* Close Button */}
           <button
-            onClick={() => window.print()}
-            style={{
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              marginRight: '10px',
-              fontSize: '14px'
-            }}
-          >
-            🖨️ Print
-          </button>
-          <button
+            className="no-print"
             onClick={() => setPrintingResultId(null)}
             style={{
-              background: '#6b7280',
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: '#ef4444',
               color: 'white',
               border: 'none',
-              padding: '10px 20px',
-              borderRadius: '6px',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: '20px',
+              fontWeight: 'bold',
+              zIndex: 10
             }}
           >
-            Close
+            ✕
           </button>
+
+          <div className="content-wrapper">
+            {/* Header Section */}
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <div style={{ display: 'inline-block', padding: '10px 30px', borderBottom: '3px solid #d97706', marginBottom: '15px' }}>
+                <h2 className="premium-header" style={{ margin: '0 0 5px 0', fontSize: '32px', fontWeight: '700', letterSpacing: '1px' }}>
+                  {resultSettings.resultHeader}
+                </h2>
+                <p className="premium-header" style={{ margin: '0', fontSize: '16px', fontStyle: 'italic', color: '#475569' }}>
+                  {resultSettings.schoolMotto || 'Excellence in Education'}
+                </p>
+              </div>
+              <p style={{ margin: '0', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '3px', color: '#1e3a8a', fontWeight: '600' }}>
+                Official Academic Report
+              </p>
+            </div>
+
+            {/* Student Info & Medallion Section */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', padding: '25px', background: 'linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 10px 15px -3px rgba(30, 58, 138, 0.2)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', flex: 1 }}>
+                <div>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '1px' }}>Student Name</p>
+                  <p style={{ margin: '0', fontSize: '18px', fontWeight: '700', color: '#f8fafc' }}>{result.studentName}</p>
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '1px' }}>Academic Term</p>
+                  <p style={{ margin: '0', fontSize: '16px', fontWeight: '600', color: '#f8fafc' }}>{result.term}</p>
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '1px' }}>Class / Grade</p>
+                  <p style={{ margin: '0', fontSize: '16px', fontWeight: '600', color: '#f8fafc' }}>{result.studentClass}</p>
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '1px' }}>Report Date</p>
+                  <p style={{ margin: '0', fontSize: '16px', fontWeight: '600', color: '#f8fafc' }}>{new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* Medallion */}
+              <div style={{ marginLeft: '30px', textAlign: 'center' }}>
+                <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: '#fff', border: '4px solid #d97706', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: '0 0 0 4px rgba(217, 119, 6, 0.2)' }}>
+                  <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', color: '#1e3a8a', letterSpacing: '1px' }}>Position</span>
+                  <span className="premium-header" style={{ fontSize: '32px', color: '#d97706', lineHeight: '1' }}>{positionText.replace(/[^0-9]/g, '')}</span>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#d97706' }}>{positionText.replace(/[0-9]/g, '')}</span>
+                </div>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>Out of {classResults.length}</div>
+              </div>
+            </div>
+
+            {/* Results Table */}
+            <table className="premium-table">
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', borderRadius: '8px 0 0 0' }}>Subject</th>
+                  <th style={{ textAlign: 'center' }}>1st CA</th>
+                  <th style={{ textAlign: 'center' }}>2nd CA</th>
+                  <th style={{ textAlign: 'center' }}>Exam</th>
+                  <th style={{ textAlign: 'center' }}>Total</th>
+                  <th style={{ textAlign: 'center', borderRadius: '0 8px 0 0' }}>Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.subjects.map((subject, idx) => (
+                  <tr key={idx}>
+                    <td style={{ fontWeight: '600', color: '#1e3a8a' }}>{subject.name}</td>
+                    <td style={{ textAlign: 'center' }}>{subject.ca1}</td>
+                    <td style={{ textAlign: 'center' }}>{subject.ca2}</td>
+                    <td style={{ textAlign: 'center' }}>{subject.exam}</td>
+                    <td style={{ textAlign: 'center', fontWeight: '700', color: '#1e3a8a' }}>{subject.total}</td>
+                    <td style={{ textAlign: 'center', fontWeight: '700', color: subject.grade === 'F' ? '#ef4444' : '#10b981' }}>
+                      {subject.grade}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Overall Summary Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '20px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '50px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ margin: '0 0 5px 0', fontSize: '12px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Overall Average</p>
+                <p style={{ margin: '0', fontSize: '24px', fontWeight: '700', color: '#1e3a8a' }}>{result.overallAverage.toFixed(2)}%</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: '#cbd5e1' }}></div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ margin: '0 0 5px 0', fontSize: '12px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Overall Grade</p>
+                <p className="gold-accent" style={{ margin: '0', fontSize: '24px', fontWeight: '700' }}>{result.overallGrade}</p>
+              </div>
+            </div>
+
+            {/* Signatures */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', marginTop: '40px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ borderBottom: '1px solid #1e3a8a', width: '200px', margin: '0 auto 10px', position: 'relative' }}>
+                  <div className="premium-header" style={{ position: 'absolute', bottom: '5px', width: '100%', fontSize: '36px', color: '#1e3a8a', opacity: '0.8' }}>
+                    {resultSettings.principalName ? resultSettings.principalName.split(' ')[0] : 'Sig'}
+                  </div>
+                </div>
+                <p style={{ margin: '0 0 3px 0', fontWeight: '700', fontSize: '14px', color: '#1e3a8a' }}>
+                  {resultSettings.principalName || 'Principal Name'}
+                </p>
+                <p style={{ margin: '0', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Principal
+                </p>
+              </div>
+
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ borderBottom: '1px solid #1e3a8a', width: '200px', margin: '0 auto 10px', position: 'relative' }}>
+                  <div className="premium-header" style={{ position: 'absolute', bottom: '5px', width: '100%', fontSize: '36px', color: '#1e3a8a', opacity: '0.8' }}>
+                    {resultSettings.proprietressName ? resultSettings.proprietressName.split(' ')[0] : 'Sig'}
+                  </div>
+                </div>
+                <p style={{ margin: '0 0 3px 0', fontWeight: '700', fontSize: '14px', color: '#1e3a8a' }}>
+                  {resultSettings.proprietressName || 'Proprietress Name'}
+                </p>
+                <p style={{ margin: '0', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Proprietress
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ textAlign: 'center', marginTop: '50px', paddingTop: '20px', borderTop: '1px solid #e2e8f0', fontSize: '12px', color: '#94a3b8' }}>
+              <p style={{ margin: '0', fontStyle: 'italic' }}>{resultSettings.resultFooter}</p>
+            </div>
+
+            {/* Print Action Buttons (Hidden on Print) */}
+            <div className="no-print" style={{ textAlign: 'center', marginTop: '40px' }}>
+              <button
+                onClick={() => window.print()}
+                style={{
+                  background: '#1e3a8a',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  marginRight: '15px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  boxShadow: '0 4px 6px -1px rgba(30, 58, 138, 0.4)'
+                }}
+              >
+                🖨️ Print Result Sheet
+              </button>
+              <button
+                onClick={() => setPrintingResultId(null)}
+                style={{
+                  background: 'transparent',
+                  color: '#64748b',
+                  border: '1px solid #cbd5e1',
+                  padding: '12px 24px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: '600'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const teacherClasses = [...new Set(students.map(s => s.studentClass))];
   const teacherSubjects = ['Mathematics', 'Physics', 'Chemistry', 'English Language', 'Basic Science']; // Mock assigned subjects
