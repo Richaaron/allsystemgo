@@ -49,11 +49,19 @@ export const supabaseService = {
 
       console.log('✅ Login successful for user:', user.email);
 
-      // Update last login
-      await supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', user.id);
+      // Update last login (wrapped in try-catch to prevent failures from blocking login)
+      try {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', user.id);
+        
+        if (updateError) {
+          console.warn('⚠️ Could not update last_login:', updateError.message);
+        }
+      } catch (updateErr) {
+        console.warn('⚠️ Error updating last_login:', updateErr.message);
+      }
 
       return {
         token: 'dummy-jwt-token',

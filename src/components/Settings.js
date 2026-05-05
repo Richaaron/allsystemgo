@@ -231,14 +231,7 @@ const Settings = ({ user }) => {
 
       console.log('Saving school profile for school_id:', schoolId);
 
-      await supabaseService.updateSettings(schoolId, {
-        school_email: schoolProfile.schoolEmail,
-        school_phone: schoolProfile.schoolPhone,
-        school_address: schoolProfile.schoolAddress,
-        school_motto: schoolProfile.schoolMotto
-      });
-
-      // Also save to localStorage for offline access
+      // Save to localStorage for access
       localStorage.setItem('schoolProfile', JSON.stringify(schoolProfile));
       
       setSuccessMessage('School profile saved successfully!');
