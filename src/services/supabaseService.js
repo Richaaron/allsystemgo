@@ -167,6 +167,18 @@ export const supabaseService = {
     try {
       console.log('👤 Creating teacher user account:', userData.email);
 
+      // Check if user already exists first to prevent 409 Conflict browser network errors
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id, email')
+        .eq('email', userData.email)
+        .maybeSingle();
+
+      if (existingUser) {
+        console.warn('⚠️ Teacher user account already exists for this email.');
+        return { exists: true, email: userData.email };
+      }
+
       let data, error;
 
       // Try with school_id first
