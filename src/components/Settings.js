@@ -53,23 +53,31 @@ const Settings = ({ user }) => {
       let schoolId = 1;
       if (token) {
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          schoolId = payload.school_id || 1;
-          console.log('Decoded school_id from token:', schoolId);
+          // Split token and decode payload
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            // Add padding if needed for base64 decoding
+            const payload = parts[1];
+            const paddedPayload = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
+            const decoded = JSON.parse(atob(paddedPayload));
+            schoolId = decoded.school_id || 1;
+            console.log('Decoded school_id from token:', schoolId);
+          }
         } catch (e) {
-          console.warn('Could not decode token:', e);
+          console.warn('Could not decode token:', e.message);
         }
       }
       
       const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
       
       console.log('Loading settings from:', apiUrl);
+      console.log('Supabase key present:', !!config.supabaseKey);
       
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': config.supabaseKey || '',
+          'apikey': config.supabaseKey,
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
       });
@@ -250,20 +258,27 @@ const Settings = ({ user }) => {
       let schoolId = 1;
       if (token) {
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          schoolId = payload.school_id || 1;
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = parts[1];
+            const paddedPayload = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
+            const decoded = JSON.parse(atob(paddedPayload));
+            schoolId = decoded.school_id || 1;
+          }
         } catch (e) {
-          console.warn('Could not decode token:', e);
+          console.warn('Could not decode token:', e.message);
         }
       }
       
       const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
+      console.log('School Profile Save URL:', apiUrl);
+      console.log('Supabase key present:', !!config.supabaseKey);
       
       const response = await fetch(apiUrl, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': config.supabaseKey || '',
+          'apikey': config.supabaseKey,
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
@@ -337,20 +352,27 @@ const Settings = ({ user }) => {
       let schoolId = 1;
       if (token) {
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          schoolId = payload.school_id || 1;
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = parts[1];
+            const paddedPayload = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
+            const decoded = JSON.parse(atob(paddedPayload));
+            schoolId = decoded.school_id || 1;
+          }
         } catch (e) {
-          console.warn('Could not decode token:', e);
+          console.warn('Could not decode token:', e.message);
         }
       }
       
       const apiUrl = `${config.apiUrl}/settings?school_id=eq.${schoolId}`;
+      console.log('Result Settings Save URL:', apiUrl);
+      console.log('Supabase key present:', !!config.supabaseKey);
       
       const response = await fetch(apiUrl, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': config.supabaseKey || '',
+          'apikey': config.supabaseKey,
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
