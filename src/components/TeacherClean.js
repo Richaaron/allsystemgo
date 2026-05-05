@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { supabaseService } from '../services/supabaseService';
 
 const TeacherClean = () => {
   const [teachers, setTeachers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     staffId: '',
     firstName: '',
@@ -52,65 +56,44 @@ const TeacherClean = () => {
     'SSS 1', 'SSS 2', 'SSS 3'
   ];
 
+  // Load teachers from Supabase on mount
   useEffect(() => {
-    // Load sample data
-    const sampleTeachers = [
-      {
-        id: 1,
-        staffId: 'FVS/EMP/001',
-        firstName: 'John',
-        lastName: 'Smith',
-        email: 'john.smith@folushovictory.edu.ng',
-        phone: '+234-8012345678',
-        gender: 'Male',
-        dateOfBirth: '1985-06-15',
-        address: '123 Lagos Street, Lagos',
-        department: 'Secondary',
-        role: 'Form Teacher',
-        qualifications: ['B.Ed Education'],
-        subjects: ['English Language', 'Literature in English'],
-        employmentDate: '2020-01-15',
-        status: 'active',
-        assignedClass: 'JSS 2'
-      },
-      {
-        id: 2,
-        staffId: 'FVS/EMP/002',
-        firstName: 'Mary',
-        lastName: 'Johnson',
-        email: 'mary.johnson@folushovictory.edu.ng',
-        phone: '+234-8023456789',
-        gender: 'Female',
-        dateOfBirth: '1988-03-20',
-        address: '456 Enugu Road, Anambra',
-        department: 'Secondary',
-        role: 'Subject Teacher',
-        qualifications: ['B.Sc Mathematics'],
-        subjects: ['Mathematics', 'Physics'],
-        employmentDate: '2021-02-10',
-        status: 'active'
-      },
-      {
-        id: 3,
-        staffId: 'FVS/EMP/003',
-        firstName: 'David',
-        lastName: 'Brown',
-        email: 'david.brown@folushovictory.edu.ng',
-        phone: '+234-8034567890',
-        gender: 'Male',
-        dateOfBirth: '1982-11-10',
-        address: '789 Abuja Way, FCT',
-        department: 'Secondary',
-        role: 'Dual Role',
-        qualifications: ['M.Ed Mathematics', 'B.Sc Physics'],
-        subjects: ['Mathematics', 'Physics', 'Chemistry'],
-        employmentDate: '2019-08-20',
-        status: 'active',
-        assignedClass: 'SSS 1'
-      }
-    ];
-    setTeachers(sampleTeachers);
+    loadTeachers();
   }, []);
+
+  const loadTeachers = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log('📋 Loading teachers from Supabase...');
+
+      const data = await supabaseService.getTeachers();
+      console.log('✅ Teachers loaded:', data?.length || 0);
+
+      // Map snake_case to camelCase for the form
+      const mappedData = (data || []).map(t => ({
+        id: t.id,
+        staffId: t.staff_id || '',
+        firstName: t.first_name || t.firstName || '',
+        lastName: t.last_name || t.lastName || '',
+        email: t.email || '',
+        phone: t.phone || '',
+        gender: t.gender || '',
+        department: t.department || '',
+        role: t.role || '',
+        subjects: Array.isArray(t.subjects) ? t.subjects : (t.subjects ? [t.subjects] : []),
+        status: t.status || 'active',
+        assignedClass: t.assigned_class || t.assignedClass || ''
+      }));
+
+      setTeachers(mappedData);
+    } catch (err) {
+      console.error('❌ Error loading teachers:', err);
+      setError('Failed to load teachers: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const generateStaffId = () => {
     const year = new Date().getFullYear();
@@ -147,7 +130,7 @@ const TeacherClean = () => {
     setFormData(prev => ({ ...prev, subjects: selectedSubjects }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Basic validation
@@ -156,58 +139,108 @@ const TeacherClean = () => {
       return;
     }
 
-    if (editingTeacher) {
-      // Update existing teacher
-      setTeachers(prev => prev.map(teacher =>
-        teacher.id === editingTeacher.id
-          ? { ...teacher, ...formData }
-          : teacher
-      ));
-    } else {
-      // Generate credentials for new teacher
-      const generatedUsername = generateUsername(formData.firstName, formData.lastName);
-      const generatedPassword = generatePassword();
+    setIsSubmitting(true);
+    setError(null);
 
-      // Add new teacher with credentials
-      const newTeacher = {
-        id: teachers.length + 1,
-        staffId: formData.staffId || generateStaffId(),
-        username: generatedUsername,
-        password: generatedPassword,
-        ...formData
-      };
-      setTeachers(prev => [...prev, newTeacher]);
+    try {
+      if (editingTeacher) {
+        // Update existing teacher in Supabase
+        console.log('📝 Updating teacher in Supabase:', editingTeacher.id);
 
-      // Show credentials that will be sent to teacher's email
-      alert(
-        `Teacher Created Successfully!\n\n` +
-        `Credentials will be sent to: ${formData.email}\n\n` +
-        `Username: ${generatedUsername}\n` +
-        `Password: ${generatedPassword}\n\n` +
-        `Please save these credentials securely.`
-      );
+        const updateData = {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          gender: formData.gender,
+          department: formData.department,
+          role: formData.role,
+          subjects: formData.subjects,
+          status: formData.status,
+          assigned_class: formData.assignedClass,
+          updated_at: new Date().toISOString()
+        };
+
+        await supabaseService.updateTeacher(editingTeacher.id, updateData);
+        console.log('✅ Teacher updated successfully');
+
+        // Refresh the list
+        await loadTeachers();
+        alert('Teacher updated successfully!');
+      } else {
+        // Generate credentials for new teacher
+        const generatedUsername = generateUsername(formData.firstName, formData.lastName);
+        const generatedPassword = generatePassword();
+
+        console.log('➕ Creating new teacher in Supabase...');
+
+        // Insert teacher into Supabase
+        const teacherData = {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          gender: formData.gender,
+          department: formData.department,
+          role: formData.role,
+          subjects: formData.subjects,
+          status: formData.status,
+          assigned_class: formData.assignedClass
+        };
+
+        const newTeacher = await supabaseService.createTeacher(teacherData);
+        console.log('✅ Teacher created in Supabase:', newTeacher);
+
+        // Create user account so teacher can login
+        try {
+          await supabaseService.createTeacherUser({
+            email: formData.email,
+            password: generatedPassword
+          });
+        } catch (userErr) {
+          console.warn('⚠️ Could not create user account (may already exist):', userErr.message);
+        }
+
+        // Refresh the list
+        await loadTeachers();
+
+        // Show credentials that will be sent to teacher's email
+        alert(
+          `Teacher Created Successfully!\n\n` +
+          `Credentials will be sent to: ${formData.email}\n\n` +
+          `Username: ${generatedUsername}\n` +
+          `Password: ${generatedPassword}\n\n` +
+          `Please save these credentials securely.`
+        );
+      }
+
+      // Reset form
+      setFormData({
+        staffId: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        gender: '',
+        dateOfBirth: '',
+        address: '',
+        department: '',
+        role: '',
+        qualifications: [],
+        subjects: [],
+        employmentDate: new Date().toISOString().split('T')[0],
+        status: 'active',
+        assignedClass: ''
+      });
+      setEditingTeacher(null);
+      setShowForm(false);
+    } catch (err) {
+      console.error('❌ Error saving teacher:', err);
+      setError('Failed to save teacher: ' + err.message);
+      alert('Failed to save teacher: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Reset form
-    setFormData({
-      staffId: '',
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      gender: '',
-      dateOfBirth: '',
-      address: '',
-      department: '',
-      role: '',
-      qualifications: [],
-      subjects: [],
-      employmentDate: new Date().toISOString().split('T')[0],
-      status: 'active',
-      assignedClass: ''
-    });
-    setEditingTeacher(null);
-    setShowForm(false);
   };
 
   const handleEdit = (teacher) => {
@@ -216,9 +249,20 @@ const TeacherClean = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (teacherId) => {
-    if (window.confirm('Are you sure you want to delete this teacher?')) {
-      setTeachers(prev => prev.filter(teacher => teacher.id !== teacherId));
+  const handleDelete = async (teacherId) => {
+    if (!window.confirm('Are you sure you want to delete this teacher?')) return;
+
+    try {
+      setIsLoading(true);
+      console.log('🗑️ Deleting teacher:', teacherId);
+      await supabaseService.deleteTeacher(teacherId);
+      console.log('✅ Teacher deleted');
+      await loadTeachers();
+    } catch (err) {
+      console.error('❌ Error deleting teacher:', err);
+      alert('Failed to delete teacher: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -253,21 +297,35 @@ const TeacherClean = () => {
         marginBottom: '20px'
       }}>
         <h2 style={{ color: '#f1f5f9', fontSize: '1.8rem' }}>Teachers Management</h2>
-        <button 
+        <button
           onClick={() => setShowForm(true)}
+          disabled={isLoading}
           style={{
-            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            background: isLoading ? 'rgba(148, 163, 184, 0.3)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
             color: 'white',
             border: 'none',
             padding: '12px 24px',
             borderRadius: '8px',
-            cursor: 'pointer',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
             fontWeight: '600'
           }}
         >
           + Add Teacher
         </button>
       </div>
+
+      {error && (
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.2)',
+          border: '1px solid rgba(239, 68, 68, 0.5)',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '20px',
+          color: '#fca5a5'
+        }}>
+          ❌ {error}
+        </div>
+      )}
 
       <div style={{
         background: 'rgba(30, 41, 59, 0.8)',
@@ -277,6 +335,12 @@ const TeacherClean = () => {
         <h3 style={{ color: '#f1f5f9', marginBottom: '15px' }}>
           All Teachers ({teachers.length})
         </h3>
+
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+            <p>Loading teachers...</p>
+          </div>
+        ) : (
         
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -354,6 +418,7 @@ const TeacherClean = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {showForm && (
@@ -669,19 +734,20 @@ const TeacherClean = () => {
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{
-                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    background: isSubmitting ? 'rgba(148, 163, 184, 0.3)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
                     color: 'white',
                     border: 'none',
                     padding: '12px 24px',
                     borderRadius: '8px',
-                    cursor: 'pointer',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     fontWeight: '600'
                   }}
                 >
-                  {editingTeacher ? 'Update Teacher' : 'Add Teacher'}
+                  {isSubmitting ? 'Saving...' : (editingTeacher ? 'Update Teacher' : 'Add Teacher')}
                 </button>
               </div>
             </form>

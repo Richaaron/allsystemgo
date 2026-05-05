@@ -115,6 +115,38 @@ export const supabaseService = {
     return true
   },
 
+  // Create user account for teacher so they can login
+  async createTeacherUser(userData) {
+    try {
+      console.log('👤 Creating teacher user account:', userData.email);
+
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          email: userData.email,
+          password: userData.password,
+          role: 'teacher',
+          is_active: true,
+          school_id: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Failed to create teacher user:', error);
+        throw error;
+      }
+
+      console.log('✅ Teacher user account created:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Teacher user creation error:', error.message);
+      throw error;
+    }
+  },
+
   // Students
   async getStudents() {
     const { data, error } = await supabase
