@@ -50,11 +50,12 @@ const Settings = ({ user }) => {
       
       console.log('Loading settings from Supabase Edge Function...');
       
-      // Call Supabase Edge Function
+      // Call Supabase Edge Function with API key
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseKey}`
         }
       });
 
@@ -268,23 +269,14 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        setErrors({ general: 'Session expired. Please login again.' });
-        setIsSubmitting(false);
-        return;
-      }
-
       console.log('Saving result settings to Supabase Edge Function...');
 
       // Call Supabase Edge Function to update settings
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'apikey': config.supabaseKey,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseKey}`
         },
         body: JSON.stringify({
           principal_name: resultSettings.principalName,
