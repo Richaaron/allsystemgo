@@ -128,7 +128,7 @@ const SimpleLogin = ({ onLogin }) => {
         id: response.user.id,
         username: formData.username,
         name: response.user.email, // Use email as name for now
-        role: response.user.role,
+        role: formData.role, // Use selected role (e.g. form_teacher) instead of database base role (teacher)
         email: response.user.email,
         department: 'Administration', // Default department
         permissions: getRolePermissions(formData.role)

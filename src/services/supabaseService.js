@@ -42,7 +42,10 @@ export const supabaseService = {
       }
 
       // Check role
-      if (user.role !== role) {
+      const isTeacherSubRole = ['form_teacher', 'subject_teacher', 'dual_role'].includes(role);
+      const isTeacherMatch = user.role === 'teacher' && isTeacherSubRole;
+
+      if (user.role !== role && !isTeacherMatch) {
         console.error('❌ Role mismatch. Expected:', role, 'Got:', user.role);
         throw new Error(`Role mismatch. User role is "${user.role}" but you selected "${role}"`);
       }

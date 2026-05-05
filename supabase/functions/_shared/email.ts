@@ -1,4 +1,5 @@
 // Email service using SMTP (Gmail or any SMTP provider)
+import nodemailer from "npm:nodemailer@6.9.8";
 
 // Get credentials from environment or use defaults
 const SMTP_HOST = Deno.env.get('SMTP_HOST') || 'smtp.gmail.com';
@@ -9,33 +10,28 @@ const SCHOOL_EMAIL = Deno.env.get('SCHOOL_EMAIL') || SMTP_USER;
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
-    // Dynamic import to avoid Deno Deploy boot errors with raw TCP sockets
-    const { SmtpClient } = await import("https://deno.land/x/smtp@v0.7.0/mod.ts");
-
     console.log('🔧 Email config - Host:', SMTP_HOST, 'Port:', SMTP_PORT, 'User:', SMTP_USER);
     
-    const client = new SmtpClient();
-
-    await client.connectTLS({
-      hostname: SMTP_HOST,
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
       port: SMTP_PORT,
-      username: SMTP_USER,
-      password: SMTP_PASS,
+      secure: SMTP_PORT === 465, // true for 465, false for other ports
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
     });
-    console.log('✅ SMTP connected successfully');
 
-    await client.send({
-      from: `Folusho Victory Schools <${SCHOOL_EMAIL}>`,
+    const info = await transporter.sendMail({
+      from: `"Folusho Victory Schools" <${SCHOOL_EMAIL}>`,
       to: to,
       subject: subject,
-      content: html,
-      mimeType: 'text/html'
+      html: html,
     });
 
-    await client.close();
+    console.log('✅ SMTP connected and email sent successfully:', info.messageId);
 
-    console.log(`📧 Email sent successfully to ${to}: ${subject}`);
-    return { success: true, messageId: `email-${Date.now()}` };
+    return { success: true, messageId: info.messageId };
   } catch (error: any) {
     console.error('❌ Email send error:', error.message || error);
     // Still return success to avoid blocking the teacher creation
