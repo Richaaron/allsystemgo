@@ -1,6 +1,6 @@
 // Email - Send Notification endpoint
-import { authenticateRequest, successResponse, errorResponse, corsHeaders, handleCors } from './utils.ts';
-import { sendEmail } from './email.ts';
+import { authenticateRequest, successResponse, errorResponse, corsHeaders, handleCors } from '../_shared/utils.ts';
+import { sendEmail } from '../_shared/email.ts';
 
 Deno.serve(async (req: Request) => {
   // Handle CORS

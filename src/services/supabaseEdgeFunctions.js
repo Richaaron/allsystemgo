@@ -101,7 +101,7 @@ export const resultService = {
 // Email
 export const emailService = {
   sendNotification: async (recipient, subject, content) => {
-    return authenticatedRequest('/email/send-notification', {
+    return authenticatedRequest('/email-send-notification', {
       method: 'POST',
       body: JSON.stringify({ recipient, subject, content })
     });
