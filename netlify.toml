@@ -7,12 +7,6 @@
   REACT_APP_SUPABASE_URL = "https://oscuovpwpzjqtaczsems.supabase.co"
 
 [[redirects]]
-  from = "/api/settings"
-  to = "https://oscuovpwpzjqtaczsems.supabase.co/functions/v1/settings"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

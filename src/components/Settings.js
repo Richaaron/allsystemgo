@@ -48,8 +48,11 @@ const Settings = ({ user }) => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
+      const apiUrl = `${config.apiUrl}/settings-get`;
       
-      const response = await fetch(`/api/settings`, {
+      console.log('Loading settings from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +159,8 @@ const Settings = ({ user }) => {
         return;
       }
 
-      const response = await fetch(`/api/auth/change-password`, {
+      const apiUrl = `${config.apiUrl}/auth/change-password`;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -222,9 +226,10 @@ const Settings = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
+      const apiUrl = `${config.apiUrl}/settings-update`;
       
-      const response = await fetch(`/api/settings`, {
-        method: 'PUT',
+      const response = await fetch(apiUrl, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
@@ -295,9 +300,10 @@ const Settings = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
+      const apiUrl = `${config.apiUrl}/settings-update`;
       
-      const response = await fetch(`/api/settings`, {
-        method: 'PUT',
+      const response = await fetch(apiUrl, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })

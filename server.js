@@ -783,6 +783,20 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
   try {
     const schoolId = req.user.school_id || 1;
     console.log('Updating settings for school_id:', schoolId);
+    console.log('User data:', req.user);
+    
+    // Verify school exists
+    const schoolExists = await db.select().from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1);
+    
+    if (!schoolExists || schoolExists.length === 0) {
+      console.error('School not found for school_id:', schoolId);
+      return res.status(400).json({ error: `School with ID ${schoolId} not found in database` });
+    }
+    
+    console.log('School found:', schoolExists[0].name);
+    
     const {
       principal_name,
       principal_title,

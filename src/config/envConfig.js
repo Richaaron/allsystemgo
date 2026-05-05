@@ -2,9 +2,18 @@
 // Centralized configuration management for the Nigerian School Management System
 
 // Environment variables with fallbacks
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://oscuovpwpzjqtaczsems.supabase.co';
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+
 const config = {
-  // API Configuration
-  apiUrl: process.env.REACT_APP_API_URL || 'https://folusho-victory-schools-api.onrender.com/api',
+  // Supabase Configuration (Primary Backend)
+  supabase: {
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey
+  },
+
+  // API Configuration - Using Supabase Edge Functions
+  apiUrl: `${supabaseUrl}/functions/v1`,
   apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT) || 10000,
   
   // Authentication
