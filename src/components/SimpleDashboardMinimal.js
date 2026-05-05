@@ -102,7 +102,7 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {menuItems.filter(item => {
               if (user?.role === 'admin') return true;
-              return !['teachers', 'classes', 'settings'].includes(item.id);
+              return !['teachers', 'classes'].includes(item.id);
             }).map(item => (
               <li key={item.id} style={{ marginBottom: '10px' }}>
                 <button
