@@ -50,12 +50,11 @@ const Settings = ({ user }) => {
       
       console.log('Loading settings from Supabase Edge Function...');
       
-      // Call Supabase Edge Function with API key
+      // Call Supabase Edge Function (no auth needed - JWT disabled)
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.supabaseKey}`
+          'Content-Type': 'application/json'
         }
       });
 
@@ -275,8 +274,7 @@ const Settings = ({ user }) => {
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.supabaseKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           principal_name: resultSettings.principalName,
