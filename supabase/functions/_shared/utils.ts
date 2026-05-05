@@ -47,27 +47,27 @@ export function authenticateRequest(req: Request): any {
   return verifyToken(token);
 }
 
+// CORS headers
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey'
+};
+
 // Response helpers
 export function successResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
   });
 }
 
 export function errorResponse(message: string, status = 400) {
   return new Response(
     JSON.stringify({ error: message }),
-    { status, headers: { 'Content-Type': 'application/json' } }
+    { status, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
   );
 }
-
-// CORS headers
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-};
 
 // Handle CORS preflight
 export function handleCors(req: Request) {
