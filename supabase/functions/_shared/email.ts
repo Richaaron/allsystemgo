@@ -1,5 +1,4 @@
 // Email service using SMTP (Gmail or any SMTP provider)
-import { SMTPClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
 // Get credentials from environment or use defaults
 const SMTP_HOST = Deno.env.get('SMTP_HOST') || 'smtp.gmail.com';
@@ -10,17 +9,19 @@ const SCHOOL_EMAIL = Deno.env.get('SCHOOL_EMAIL') || SMTP_USER;
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
+    // Dynamic import to avoid Deno Deploy boot errors with raw TCP sockets
+    const { SmtpClient } = await import("https://deno.land/x/smtp@v0.7.0/mod.ts");
+
     console.log('🔧 Email config - Host:', SMTP_HOST, 'Port:', SMTP_PORT, 'User:', SMTP_USER);
     
-    const client = new SMTPClient({
+    const client = new SmtpClient();
+
+    await client.connectTLS({
       hostname: SMTP_HOST,
       port: SMTP_PORT,
       username: SMTP_USER,
       password: SMTP_PASS,
-      tls: true
     });
-
-    await client.connect();
     console.log('✅ SMTP connected successfully');
 
     await client.send({
