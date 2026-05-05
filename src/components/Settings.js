@@ -49,12 +49,16 @@ const Settings = ({ user }) => {
       setIsLoading(true);
       
       console.log('Loading settings from Supabase Edge Function...');
+      console.log('Function URL:', config.functionsUrl);
+      console.log('Supabase Key available:', !!config.supabaseKey);
+      console.log('Supabase Key length:', config.supabaseKey?.length || 0);
       
-      // Call Supabase Edge Function (no auth needed - JWT disabled)
+      // Call Supabase Edge Function with ANON key
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseKey}`
         }
       });
 
@@ -274,7 +278,8 @@ const Settings = ({ user }) => {
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.supabaseKey}`
         },
         body: JSON.stringify({
           principal_name: resultSettings.principalName,
