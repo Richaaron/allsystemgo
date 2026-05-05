@@ -4,6 +4,7 @@ import StudentClean from './StudentClean';
 import TeacherClean from './TeacherClean';
 import ClassesClean from './ClassesClean';
 import Settings from './Settings';
+import TeacherActivityLog from './TeacherActivityLog';
 
 const SimpleDashboardMinimal = ({ user, onLogout }) => {
   const [activeMenu, setActiveMenu] = useState('overview');
@@ -57,6 +58,8 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
         return <TeacherClean />;
       case 'classes':
         return <ClassesClean />;
+      case 'activity':
+        return <TeacherActivityLog />;
       case 'settings':
         return <Settings user={user} />;
       default:
@@ -75,6 +78,7 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
     { id: 'students', label: 'Students', icon: '🎓' },
     { id: 'teachers', label: 'Teachers', icon: '👥' },
     { id: 'classes', label: 'Classes', icon: '🏫' },
+    { id: 'activity', label: 'Teacher Activity', icon: '📋' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -102,7 +106,7 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {menuItems.filter(item => {
               if (user?.role === 'admin') return true;
-              return !['teachers', 'classes'].includes(item.id);
+              return !['teachers', 'classes', 'activity'].includes(item.id);
             }).map(item => (
               <li key={item.id} style={{ marginBottom: '10px' }}>
                 <button
