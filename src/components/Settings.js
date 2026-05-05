@@ -47,16 +47,13 @@ const Settings = ({ user }) => {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('token');
       
       console.log('Loading settings from Supabase Edge Function...');
       
-      // Call Supabase Edge Function with auth headers
+      // Call Supabase Edge Function
       const response = await fetch(`${config.functionsUrl}/settings`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'apikey': config.supabaseKey,
           'Content-Type': 'application/json'
         }
       });
