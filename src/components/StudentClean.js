@@ -33,8 +33,9 @@ const StudentClean = () => {
 
   const generateAdmissionNumber = () => {
     const year = new Date().getFullYear();
-    const randomNum = Math.floor(Math.random() * 9000) + 1000;
-    return `FVS/${year}/${randomNum}`;
+    // Use last 5 digits of timestamp for uniqueness - no collision risk
+    const uniqueId = Date.now().toString().slice(-5);
+    return `FVS/${year}/${uniqueId}`;
   };
 
   const generateCredentials = (studentName) => {
@@ -123,10 +124,14 @@ const StudentClean = () => {
   };
 
   const handleDelete = async (studentId) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
-      // Assuming a delete function exists, else just remove locally for now
-      // await supabaseService.deleteStudent(studentId);
-      setStudents(prev => prev.filter(student => student.id !== studentId));
+    if (window.confirm('Are you sure you want to delete this student? This cannot be undone.')) {
+      try {
+        await supabaseService.deleteStudent(studentId);
+        setStudents(prev => prev.filter(student => student.id !== studentId));
+      } catch (error) {
+        console.error('Failed to delete student:', error);
+        alert('Failed to delete student. Please try again.');
+      }
     }
   };
 

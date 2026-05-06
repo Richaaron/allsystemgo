@@ -209,7 +209,7 @@ const ResultsNigerian = ({ user }) => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!selectedStudent) return;
@@ -224,41 +224,39 @@ const ResultsNigerian = ({ user }) => {
       grade: formData[subject.name]?.grade || 'F'
     }));
 
-    const newResult = {
-      id: results.length + 1,
-      studentId: selectedStudent.id,
-      studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
-      studentClass: selectedStudent.studentClass,
-      term: term,
-      subjects: subjectResults,
-      overallTotal: overallScores.total,
-      overallAverage: overallScores.average,
-      overallGrade: overallScores.grade,
-      status: 'draft'
-    };
+    try {
+      // Save to Supabase
+      const saveResult = await supabaseService.saveStudentResult(
+        selectedStudent,
+        term,
+        subjectResults,
+        overallScores.total,
+        overallScores.average,
+        overallScores.grade
+      );
 
-    // Calculate position for this student
-    const { position, totalStudents, positionText } = calculatePosition(newResult, results);
-    newResult.position = position;
-    newResult.totalStudents = totalStudents;
-    newResult.positionText = positionText;
+      if (saveResult.success) {
+        // Reload results from database to get accurate IDs and data
+        const freshResults = await supabaseService.getStudentResults(term);
+        setResults(freshResults);
 
-    const updatedResults = [...results, newResult];
-    
-    // Recalculate positions for all students in this class/term
-    const classResults = updatedResults.filter(
-      r => r.studentClass === selectedStudent.studentClass && r.term === term
-    );
-    
-    classResults.forEach((result, index) => {
-      const sorted = [...classResults].sort((a, b) => b.overallAverage - a.overallAverage);
-      const posIndex = sorted.findIndex(r => r.id === result.id);
-      result.position = posIndex + 1;
-      result.totalStudents = sorted.length;
-      result.positionText = getPositionOrdinal(posIndex + 1);
-    });
+        // Log the activity
+        await supabaseService.logTeacherActivity(
+          user?.name || user?.email || 'Admin',
+          user?.role || 'admin',
+          'RESULT_ENTRY',
+          `Entered results for ${selectedStudent.firstName} ${selectedStudent.lastName} (${selectedStudent.studentClass}) - ${term}`
+        );
 
-    setResults(updatedResults);
+        alert(`Results saved successfully for ${selectedStudent.firstName} ${selectedStudent.lastName}!`);
+      } else {
+        alert('Failed to save results: ' + (saveResult.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error saving result:', error);
+      alert('Failed to save results. Please try again.');
+    }
+
     setShowForm(false);
     setSelectedStudent(null);
     setFormData({});
@@ -266,29 +264,9 @@ const ResultsNigerian = ({ user }) => {
 
   // Filter results based on user role
   const getFilteredResults = () => {
-    if (!user || user.role === 'admin') {
-      return results;
-    }
-
-    switch (user.role) {
-      case 'form_teacher':
-        return results.filter(result => result.studentClass === 'JSS 2');
-      case 'subject_teacher':
-        return results.filter(result => {
-          return result.subjects.some(subject => 
-            ['Mathematics', 'Physics'].includes(subject.name)
-          );
-        });
-      case 'dual_role':
-        return results.filter(result => 
-          result.studentClass === 'SSS 1' || 
-          result.subjects.some(subject => 
-            ['Mathematics', 'Physics', 'Chemistry'].includes(subject.name)
-          )
-        );
-      default:
-        return [];
-    }
+    // All authenticated users see all results for the selected term
+    // Future: filter by teacher's assigned class/subjects from their profile
+    return results;
   };
 
   const filteredResults = getFilteredResults();
@@ -309,30 +287,23 @@ const ResultsNigerian = ({ user }) => {
   };
 
   const handleSaveSubjectScores = async () => {
-    // Collect the scores for the selected class/subject and compile them
-    const updatedResults = [...results];
-    
+    if (!selectedClass || !selectedSubject) {
+      alert('Please select a class and subject first.');
+      return;
+    }
+
+    let savedCount = 0;
+
     for (const [studentId, scores] of Object.entries(subjectScores)) {
       const student = students.find(s => s.id === parseInt(studentId));
       if (!student) continue;
 
-      let existingResultIndex = updatedResults.findIndex(r => r.studentId === student.id && r.term === term);
-      
-      let currentResult;
-      if (existingResultIndex >= 0) {
-        currentResult = { ...updatedResults[existingResultIndex] };
-      } else {
-        currentResult = {
-          studentId: student.id,
-          studentName: `${student.firstName} ${student.lastName}`,
-          studentClass: student.studentClass,
-          term: term,
-          subjects: []
-        };
-      }
+      // Find existing result for this student+term in current results
+      const existingResult = results.find(r => r.studentId === student.id && r.term === term);
 
-      // Update or add subject
-      const subjectIndex = currentResult.subjects.findIndex(s => s.name === selectedSubject);
+      // Build merged subjects array
+      const currentSubjects = existingResult ? [...(existingResult.subjects || [])] : [];
+      const subjectIndex = currentSubjects.findIndex(s => s.name === selectedSubject);
       const subjectData = {
         name: selectedSubject,
         ca1: parseInt(scores.ca1) || 0,
@@ -343,46 +314,37 @@ const ResultsNigerian = ({ user }) => {
       };
 
       if (subjectIndex >= 0) {
-        currentResult.subjects[subjectIndex] = subjectData;
+        currentSubjects[subjectIndex] = subjectData;
       } else {
-        currentResult.subjects.push(subjectData);
+        currentSubjects.push(subjectData);
       }
 
-      // Recalculate overall
-      currentResult.overallTotal = currentResult.subjects.reduce((sum, subj) => sum + subj.total, 0);
-      currentResult.overallAverage = currentResult.subjects.length > 0 
-        ? currentResult.overallTotal / currentResult.subjects.length 
-        : 0;
-      currentResult.overallGrade = getGrade(currentResult.overallAverage);
+      const overallTotal = currentSubjects.reduce((sum, subj) => sum + subj.total, 0);
+      const overallAverage = currentSubjects.length > 0 ? overallTotal / currentSubjects.length : 0;
+      const overallGrade = getGrade(overallAverage);
 
-      // Save to Supabase
       await supabaseService.saveStudentResult(
-        student, 
-        term, 
-        currentResult.subjects, 
-        currentResult.overallTotal, 
-        currentResult.overallAverage, 
-        currentResult.overallGrade
+        student,
+        term,
+        currentSubjects,
+        overallTotal,
+        overallAverage,
+        overallGrade
       );
-
-      // Update local state
-      if (existingResultIndex >= 0) {
-        updatedResults[existingResultIndex] = currentResult;
-      } else {
-        updatedResults.push(currentResult);
-      }
+      savedCount++;
     }
 
-    setResults(updatedResults);
-    
-    alert(`Subject results for ${selectedSubject} in ${selectedClass} saved successfully!`);
-    
-    // Log the activity
+    // Reload fresh results from Supabase
+    const freshResults = await supabaseService.getStudentResults(term);
+    setResults(freshResults);
+
+    alert(`${selectedSubject} results for ${selectedClass} saved for ${savedCount} student(s)!`);
+
     await supabaseService.logTeacherActivity(
       user?.name || user?.email || 'Teacher',
       user?.role || 'Teacher',
       'RESULT_ENTRY',
-      `Updated ${selectedSubject} results for ${selectedClass}.`
+      `Updated ${selectedSubject} results for ${selectedClass} — ${savedCount} student(s).`
     );
 
     setSubjectScores({});
@@ -409,10 +371,13 @@ const ResultsNigerian = ({ user }) => {
     for (const id of selectedResultIds) {
       const result = results.find(r => r.id === id);
       if (result) {
-        // Send email (using placeholder parent email if none exists)
+        // Look up the parent email from the students list using studentId
+        const student = students.find(s => s.id === result.studentId);
+        const parentEmail = student?.parentEmail || null;
+
         const res = await emailNotificationService.sendStudentResultEmail(
           result.studentName,
-          result.parentEmail || null,
+          parentEmail,
           result.term,
           result.overallGrade,
           result.overallAverage.toFixed(2)
@@ -434,7 +399,7 @@ const ResultsNigerian = ({ user }) => {
       );
     }
 
-    setSelectedResultIds([]); // Clear selection after sending
+    setSelectedResultIds([]);
   };
 
 
