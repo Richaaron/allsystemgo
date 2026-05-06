@@ -723,31 +723,94 @@ const ResultsNigerian = ({ user }) => {
             </div>
 
             {/* Signatures */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', marginTop: '40px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ borderBottom: '1px solid #1e3a8a', width: '200px', margin: '0 auto 10px', position: 'relative' }}>
-                  <div className="premium-header" style={{ position: 'absolute', bottom: '5px', width: '100%', fontSize: '36px', color: '#1e3a8a', opacity: '0.8' }}>
-                    {resultSettings.principalName ? resultSettings.principalName.split(' ')[0] : 'Sig'}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', marginTop: '60px' }}>
+              <div style={{ textAlign: 'center', position: 'relative' }}>
+                {/* Official Stamp Overlay */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-40px',
+                  left: '50%',
+                  marginLeft: '-80px',
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  border: '4px double rgba(220, 38, 38, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: 'rotate(-15deg)',
+                  pointerEvents: 'none',
+                  zIndex: 0
+                }}>
+                  <div style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    border: '1px dashed rgba(220, 38, 38, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '9px',
+                    color: 'rgba(220, 38, 38, 0.3)',
+                    textAlign: 'center',
+                    fontWeight: '900',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px'
+                  }}>
+                    Valid<br/>Official
                   </div>
                 </div>
-                <p style={{ margin: '0 0 3px 0', fontWeight: '700', fontSize: '14px', color: '#1e3a8a' }}>
+
+                <div style={{ borderBottom: '1.5px solid #1e3a8a', width: '220px', margin: '0 auto 10px', position: 'relative', height: '60px' }}>
+                  {/* Cursive Signature */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-10px',
+                    width: '100%',
+                    fontSize: '48px',
+                    fontFamily: '"Brush Script MT", "Lucida Handwriting", "Snell Roundhand", cursive',
+                    color: '#0f172a',
+                    transform: 'rotate(-5deg) skewX(-15deg)',
+                    textShadow: '1px 1px 0px rgba(0,0,0,0.2), 0px 0px 3px rgba(15, 23, 42, 0.3)',
+                    letterSpacing: '-2px',
+                    lineHeight: '1',
+                    zIndex: 2,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {resultSettings.principalName ? resultSettings.principalName.split(' ')[0] : 'Principal'}
+                  </div>
+                </div>
+                <p style={{ margin: '0 0 3px 0', fontWeight: '800', fontSize: '15px', color: '#1e3a8a', textTransform: 'uppercase' }}>
                   {resultSettings.principalName || 'Principal Name'}
                 </p>
-                <p style={{ margin: '0', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <p style={{ margin: '0', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '600' }}>
                   Principal
                 </p>
               </div>
 
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ borderBottom: '1px solid #1e3a8a', width: '200px', margin: '0 auto 10px', position: 'relative' }}>
-                  <div className="premium-header" style={{ position: 'absolute', bottom: '5px', width: '100%', fontSize: '36px', color: '#1e3a8a', opacity: '0.8' }}>
-                    {resultSettings.proprietressName ? resultSettings.proprietressName.split(' ')[0] : 'Sig'}
+              <div style={{ textAlign: 'center', position: 'relative' }}>
+                <div style={{ borderBottom: '1.5px solid #1e3a8a', width: '220px', margin: '0 auto 10px', position: 'relative', height: '60px' }}>
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-10px',
+                    width: '100%',
+                    fontSize: '48px',
+                    fontFamily: '"Brush Script MT", "Lucida Handwriting", "Snell Roundhand", cursive',
+                    color: '#1e3a8a', /* Blue ink for proprietress */
+                    transform: 'rotate(-3deg) skewX(-10deg)',
+                    textShadow: '1px 1px 0px rgba(30, 58, 138, 0.2), 0px 0px 3px rgba(30, 58, 138, 0.3)',
+                    letterSpacing: '-1px',
+                    lineHeight: '1',
+                    zIndex: 2,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {resultSettings.proprietressName ? resultSettings.proprietressName.split(' ')[0] : 'Proprietress'}
                   </div>
                 </div>
-                <p style={{ margin: '0 0 3px 0', fontWeight: '700', fontSize: '14px', color: '#1e3a8a' }}>
+                <p style={{ margin: '0 0 3px 0', fontWeight: '800', fontSize: '15px', color: '#1e3a8a', textTransform: 'uppercase' }}>
                   {resultSettings.proprietressName || 'Proprietress Name'}
                 </p>
-                <p style={{ margin: '0', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <p style={{ margin: '0', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '600' }}>
                   Proprietress
                 </p>
               </div>
