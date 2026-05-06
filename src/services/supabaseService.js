@@ -598,17 +598,30 @@ export const supabaseService = {
 
       console.log('🌱 Seeding database with initial students...');
       
+      const dummyDefaults = {
+        parent_guardian_name: 'Mr. & Mrs. Default',
+        parent_guardian_phone: '08000000000',
+        parent_guardian_email: 'parent@example.com',
+        address: '123 School Road',
+        blood_group: 'O+',
+        genotype: 'AA',
+        state_of_origin: 'Kaduna',
+        lga: 'Kaduna North',
+        religion: 'Christianity',
+        enrollment_date: '2024-01-01'
+      };
+
       const sampleStudents = [
-        { admission_number: 'FVS/2024/0001', first_name: 'Ahmed', last_name: 'Bello', student_class: 'JSS 2', date_of_birth: '2010-01-01', gender: 'Male', status: 'active', registered_subjects: [
+        { ...dummyDefaults, admission_number: 'FVS/2024/0001', first_name: 'Ahmed', last_name: 'Bello', student_class: 'JSS 2', date_of_birth: '2010-01-01', gender: 'Male', status: 'active', registered_subjects: [
             { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Basic Science', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Social Studies', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Civic Education', maxCA1: 20, maxCA2: 20, maxExam: 60 }
         ]},
-        { admission_number: 'FVS/2024/0002', first_name: 'Chinyere', last_name: 'Okonkwo', student_class: 'JSS 2', date_of_birth: '2010-02-15', gender: 'Female', status: 'active', registered_subjects: [
+        { ...dummyDefaults, admission_number: 'FVS/2024/0002', first_name: 'Chinyere', last_name: 'Okonkwo', student_class: 'JSS 2', date_of_birth: '2010-02-15', gender: 'Female', status: 'active', registered_subjects: [
             { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Basic Science', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Basic Technology', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Business Studies', maxCA1: 20, maxCA2: 20, maxExam: 60 }
         ]},
-        { admission_number: 'FVS/2024/0003', first_name: 'Tunde', last_name: 'Johnson', student_class: 'SSS 1', date_of_birth: '2008-05-10', gender: 'Male', status: 'active', registered_subjects: [
+        { ...dummyDefaults, admission_number: 'FVS/2024/0003', first_name: 'Tunde', last_name: 'Johnson', student_class: 'SSS 1', date_of_birth: '2008-05-10', gender: 'Male', status: 'active', registered_subjects: [
             { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Physics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Chemistry', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Biology', maxCA1: 20, maxCA2: 20, maxExam: 60 }
         ]},
-        { admission_number: 'FVS/2024/0004', first_name: 'Fatima', last_name: 'Mohammed', student_class: 'SSS 1', date_of_birth: '2008-11-22', gender: 'Female', status: 'active', registered_subjects: [
+        { ...dummyDefaults, admission_number: 'FVS/2024/0004', first_name: 'Fatima', last_name: 'Mohammed', student_class: 'SSS 1', date_of_birth: '2008-11-22', gender: 'Female', status: 'active', registered_subjects: [
             { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Physics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Chemistry', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Geography', maxCA1: 20, maxCA2: 20, maxExam: 60 }
         ]}
       ];
