@@ -34,23 +34,11 @@ const ResultsNigerian = ({ user }) => {
 
   const loadLiveStudentsAndResults = async () => {
     try {
-      // Fetch live data
+      // Fetch live data from Supabase (no auto-seeding)
       const fetchedStudents = await supabaseService.getStudents();
       const fetchedResults = await supabaseService.getStudentResults(term);
-      
-      // If no students exist, auto-seed the sample data into Supabase
-      if (fetchedStudents.length === 0) {
-        console.log('No students found. Running auto-seed...');
-        await supabaseService.seedSampleData();
-        // Re-fetch after seeding
-        const newlySeededStudents = await supabaseService.getStudents();
-        const newlySeededResults = await supabaseService.getStudentResults(term);
-        setStudents(newlySeededStudents);
-        setResults(newlySeededResults);
-      } else {
-        setStudents(fetchedStudents);
-        setResults(fetchedResults);
-      }
+      setStudents(fetchedStudents);
+      setResults(fetchedResults);
     } catch (e) {
       console.error('Failed to load students and results:', e);
     }
@@ -58,77 +46,24 @@ const ResultsNigerian = ({ user }) => {
 
   const loadResultSettings = async () => {
     try {
-      // Try localStorage first
-      const savedSettings = localStorage.getItem('resultSettings');
-      if (savedSettings) {
-        try {
-          const parsed = JSON.parse(savedSettings);
-          setResultSettings({
-            principalName: parsed.principalName || '',
-            proprietressName: parsed.proprietressName || '',
-            resultHeader: parsed.resultHeader || 'FOLUSHO VICTORY SCHOOLS',
-            resultFooter: parsed.resultFooter || 'Approved by the Ministry of Education',
-            schoolAddress: parsed.schoolAddress || '',
-            schoolPhone: parsed.schoolPhone || '',
-            schoolEmail: parsed.schoolEmail || ''
-          });
-          console.log('✓ Loaded result settings from localStorage');
-          return;
-        } catch (e) {
-          console.debug('Stored settings are invalid, using defaults');
-        }
-      }
-
-      // Try API endpoint with proper error handling
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://oscuovpwpzjqtaczsems.supabase.co';
-      const functionsUrl = `${supabaseUrl}/functions/v1`;
+      // Always fetch fresh settings from Supabase database
+      const data = await supabaseService.getSettings(1);
       
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        
-        const response = await fetch(`${functionsUrl}/settings`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          signal: controller.signal
-        });
-
-        clearTimeout(timeout);
-
-        if (!response.ok) {
-          console.debug('Settings API returned error, using defaults');
-          return;
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.debug('Settings API did not return JSON');
-          return;
-        }
-
-        const data = await response.json();
-        
+      if (data) {
         setResultSettings({
           principalName: data.principal_name || '',
           proprietressName: data.proprietress_name || '',
           resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
           resultFooter: data.result_footer || 'Approved by the Ministry of Education',
+          schoolMotto: data.school_motto || 'Excellence in Education',
           schoolAddress: data.school_address || '',
           schoolPhone: data.school_phone || '',
           schoolEmail: data.school_email || ''
         });
-      } catch (fetchError) {
-        if (fetchError.name === 'AbortError') {
-          console.debug('Settings API request timeout');
-        } else {
-          console.debug('Could not fetch settings from API');
-        }
+        console.log('✓ Loaded result settings from Supabase');
       }
     } catch (error) {
-      console.debug('Error in loadResultSettings:', error.message);
-      // Keep defaults if everything fails
+      console.debug('Could not load settings from Supabase, using defaults:', error.message);
     }
   };
 
