@@ -155,6 +155,91 @@ export const emailNotificationService = {
     }
   },
 
+  async sendStudentWelcomeEmail(studentName, parentName, parentEmail, credentials) {
+    try {
+      console.log(`Preparing student welcome email for ${studentName}`);
+      
+      const subject = `Welcome to Folusho Victory Schools - Parent Login Credentials for ${studentName}`;
+      const loginUrl = window.location.origin + '/login';
+
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 10px; font-family: 'Playfair Display', serif;">FOLUSHO VICTORY SCHOOLS</div>
+            <div style="font-size: 1.1em;">Official Parent Portal Credentials</div>
+          </div>
+          
+          <div style="background: white; padding: 40px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+            <p>Dear <strong>${parentName}</strong>,</p>
+            
+            <p>We are delighted to confirm the successful registration of <strong>${studentName}</strong> at Folusho Victory Schools.</p>
+
+            <p>As part of our commitment to transparent communication, we have created a dedicated <strong>Parent Portal Account</strong> for you. Through this portal, you will be able to monitor your child's academic progress, view results, and communicate directly with teachers.</p>
+
+            <div style="background: #f0fdf4; padding: 25px; border-radius: 8px; margin: 25px 0; border: 2px solid #bbf7d0;">
+              <h3 style="color: #166534; margin-top: 0; margin-bottom: 20px; text-align: center;">🔐 Your Secure Login Credentials</h3>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dcfce3;">
+                <span style="font-weight: bold; color: #374151;">Portal Role:</span>
+                <span style="color: #059669; font-weight: bold;">Parent</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dcfce3;">
+                <span style="font-weight: bold; color: #374151;">Username:</span>
+                <span style="font-family: monospace; font-size: 1.1em; font-weight: bold; color: #047857;">${credentials.username}</span>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dcfce3;">
+                <span style="font-weight: bold; color: #374151;">Password:</span>
+                <span style="font-family: monospace; font-size: 1.1em; font-weight: bold; color: #047857;">${credentials.password}</span>
+              </div>
+            </div>
+
+            <div style="text-align: center;">
+              <a href="${loginUrl}" style="display: inline-block; background: #059669; color: white; padding: 15px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; font-size: 1.1em;">
+                Access Parent Portal Now
+              </a>
+            </div>
+
+            <div style="background: #fffbeb; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+              <p style="margin: 0; color: #92400e; font-size: 0.9em;">
+                <strong>Security Note:</strong> Please keep these credentials safe. If you ever lose access, you can contact the school administration to request a password reset.
+              </p>
+            </div>
+
+            <p>We look forward to a successful academic journey with your family.</p>
+            
+            <p>Warm regards,<br>
+            <strong>Folusho Victory Schools Administration</strong></p>
+          </div>
+        </div>
+      `;
+
+      const schoolAdminEmail = 'folushovictoryschool@gmail.com';
+
+      // 1. Send to School Admin (Always)
+      console.log(`Sending credentials copy to school admin: ${schoolAdminEmail}`);
+      await emailService.sendNotification(schoolAdminEmail, `[ADMIN COPY] ${subject}`, htmlContent);
+
+      // 2. Send to Parent (If email provided)
+      if (parentEmail && parentEmail.trim() !== '') {
+        console.log(`Sending credentials directly to parent: ${parentEmail}`);
+        await emailService.sendNotification(parentEmail, subject, htmlContent);
+      } else {
+        console.log('No parent email provided. Credentials sent only to school admin for physical delivery.');
+      }
+
+      return { success: true, message: 'Welcome emails sent successfully' };
+
+    } catch (error) {
+      console.error('❌ Failed to send student welcome email:', error);
+      return {
+        success: false,
+        message: 'Failed to send email: ' + error.message
+      };
+    }
+  },
+
   isConfigured() {
     // We are using Supabase backend now, which is assumed to be configured
     return true; 

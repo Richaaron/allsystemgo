@@ -250,6 +250,73 @@ export const supabaseService = {
     }
   },
 
+  // Create user account for parent so they can login
+  async createParentUser(userData) {
+    try {
+      console.log('👤 Creating parent user account:', userData.username);
+
+      // We use username for parent login since email might be optional
+      // But Supabase auth requires email format, so we can generate a dummy email if not provided
+      const loginEmail = userData.email || `${userData.username}@parent.folushovictory.com`;
+
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id, email')
+        .eq('email', loginEmail)
+        .maybeSingle();
+
+      if (existingUser) {
+        console.warn('⚠️ Parent user account already exists.');
+        return { exists: true, email: loginEmail };
+      }
+
+      let data, error;
+
+      const result = await supabase
+        .from('users')
+        .insert({
+          email: loginEmail,
+          password: userData.password,
+          role: 'parent',
+          is_active: true,
+          school_id: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      data = result.data;
+      error = result.error;
+
+      if (error && error.message && error.message.includes('school_id')) {
+        const result2 = await supabase
+          .from('users')
+          .insert({
+            email: loginEmail,
+            password: userData.password,
+            role: 'parent',
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        data = result2.data;
+        error = result2.error;
+      }
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      if (error.code !== '23505') {
+        console.error('❌ Parent user creation error:', error.message);
+      }
+      throw error;
+    }
+  },
+
   // Students
   async getStudents() {
     const { data, error } = await supabase
@@ -530,6 +597,55 @@ export const supabaseService = {
     } catch (e) {
       console.error('❌ Error fetching students:', e.message);
       return [];
+    }
+  },
+
+  async addStudent(studentData) {
+    try {
+      // Split name into first and last for compatibility with existing schema if needed
+      const nameParts = studentData.studentName ? studentData.studentName.split(' ') : ['Unknown', 'Name'];
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || 'Unknown';
+
+      const { data, error } = await supabase
+        .from('students')
+        .insert([{
+          admission_number: studentData.admissionNumber,
+          first_name: firstName,
+          last_name: lastName,
+          parent_guardian_name: studentData.parentName || 'Unknown',
+          parent_guardian_phone: studentData.parentPhone || '0000000000',
+          parent_guardian_email: studentData.parentEmail || null,
+          student_class: studentData.class || 'Unassigned',
+          status: 'active',
+          gender: studentData.gender || 'Unknown',
+          date_of_birth: studentData.dateOfBirth || '2000-01-01',
+          address: studentData.address || 'Unknown',
+          registered_subjects: []
+        }])
+        .select()
+        .single();
+        
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: {
+          id: data.id,
+          admissionNumber: data.admission_number,
+          firstName: data.first_name,
+          lastName: data.last_name,
+          studentClass: data.student_class,
+          parentName: data.parent_guardian_name,
+          parentPhone: data.parent_guardian_phone,
+          parentEmail: data.parent_guardian_email,
+          status: data.status,
+          registeredSubjects: data.registered_subjects
+        }
+      };
+    } catch (error) {
+      console.error('❌ Error adding student:', error.message);
+      throw error;
     }
   },
 
