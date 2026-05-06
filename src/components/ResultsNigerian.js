@@ -785,7 +785,12 @@ const ResultsNigerian = ({ user }) => {
   };
 
   const teacherClasses = [...new Set(students.map(s => s.studentClass))];
-  const teacherSubjects = ['Mathematics', 'Physics', 'Chemistry', 'English Language', 'Basic Science']; // Mock assigned subjects
+  
+  // Use actual subjects assigned to the teacher, or all subjects if admin
+  const teacherSubjects = user?.role === 'admin' 
+    ? [...new Set(students.flatMap(s => s.registeredSubjects?.map(rs => rs.name) || []))]
+    : user?.subjects || [];
+    
   const studentsInSelectedClass = students.filter(s => s.studentClass === selectedClass);
 
   return (
