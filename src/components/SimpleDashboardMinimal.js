@@ -72,29 +72,48 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
     }
   };
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'results', label: 'Results', icon: '📝' },
+    { id: 'results', label: 'Results', icon: '📄' },
     { id: 'students', label: 'Students', icon: '🎓' },
-    { id: 'teachers', label: 'Teachers', icon: '👥' },
+    { id: 'teachers', label: 'Teachers', icon: '👨‍🏫' },
     { id: 'classes', label: 'Classes', icon: '🏫' },
     { id: 'activity', label: 'Teacher Activity', icon: '📋' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
+  const handleMenuClick = (id) => {
+    setActiveMenu(id);
+    setIsSidebarOpen(false); // Close sidebar on mobile after clicking
+  };
+
   return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      background: 'rgba(15, 23, 42, 0.5)'
-    }}>
+    <div className="dashboard-layout">
+      {/* Mobile Nav Toggle */}
+      <button 
+        className="mobile-nav-toggle"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        {isSidebarOpen ? '✕' : '☰'} Menu
+      </button>
+
+      {/* Overlay to close sidebar on mobile */}
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 99
+          }}
+        />
+      )}
+
       {/* Sidebar */}
-      <div style={{
-        width: '250px',
-        background: 'rgba(30, 41, 59, 0.8)',
-        borderRight: '1px solid rgba(148, 163, 184, 0.2)',
-        padding: '20px'
-      }}>
+      <div className={`dashboard-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div style={{ marginBottom: '30px' }}>
           <h1 style={{ color: '#f1f5f9', fontSize: '1.5rem' }}>
             🎓 Folusho Victory
@@ -110,7 +129,7 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
             }).map(item => (
               <li key={item.id} style={{ marginBottom: '10px' }}>
                 <button
-                  onClick={() => setActiveMenu(item.id)}
+                  onClick={() => handleMenuClick(item.id)}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -169,8 +188,8 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      {/* Main Content Area */}
+      <div className="dashboard-content">
         {/* Header */}
         <div style={{
           background: 'rgba(30, 41, 59, 0.8)',
