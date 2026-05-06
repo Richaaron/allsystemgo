@@ -56,8 +56,6 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
         return <StudentClean />;
       case 'teachers':
         return <TeacherClean />;
-      case 'classes':
-        return <ClassesClean />;
       case 'activity':
         return <TeacherActivityLog />;
       case 'settings':
@@ -79,7 +77,6 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
     { id: 'results', label: 'Results', icon: '📄' },
     { id: 'students', label: 'Students', icon: '🎓' },
     { id: 'teachers', label: 'Teachers', icon: '👨‍🏫' },
-    { id: 'classes', label: 'Classes', icon: '🏫' },
     { id: 'activity', label: 'Teacher Activity', icon: '📋' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
@@ -125,7 +122,7 @@ const SimpleDashboardMinimal = ({ user, onLogout }) => {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {menuItems.filter(item => {
               if (user?.role === 'admin') return true;
-              return !['teachers', 'classes', 'activity'].includes(item.id);
+              return !['teachers', 'activity'].includes(item.id);
             }).map(item => (
               <li key={item.id} style={{ marginBottom: '10px' }}>
                 <button
