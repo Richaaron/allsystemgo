@@ -50,24 +50,8 @@ const Settings = ({ user }) => {
     try {
       setIsLoading(true);
       
-      console.log('Loading settings from Supabase Edge Function...');
-      console.log('Function URL:', config.functionsUrl);
-      console.log('Supabase Key available:', !!config.supabaseKey);
-      console.log('Supabase Key length:', config.supabaseKey?.length || 0);
-      
-      // Call Supabase Edge Function (JWT verification disabled - no auth headers needed)
-      const response = await fetch(`${config.functionsUrl}/settings`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      // Fetch directly using the Supabase client
+      const data = await supabaseService.getSettings(1);
       
       if (data) {
         // Convert snake_case from API to camelCase for state
@@ -333,33 +317,20 @@ const Settings = ({ user }) => {
     setIsSubmitting(true);
 
     try {
-      console.log('Saving result settings to Supabase Edge Function...');
+      console.log('Saving result settings using Supabase Client...');
 
-      // Call Supabase Edge Function to update settings (JWT verification disabled)
-      const response = await fetch(`${config.functionsUrl}/settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          principal_name: resultSettings.principalName,
-          principal_title: resultSettings.principalTitle,
-          proprietress_name: resultSettings.proprietressName,
-          proprietress_title: resultSettings.proprietressTitle,
-          school_motto: resultSettings.schoolMotto,
-          result_header: resultSettings.resultHeader,
-          result_footer: resultSettings.resultFooter,
-          show_grades: resultSettings.showGrades,
-          show_positions: resultSettings.showPositions,
-          show_remarks: resultSettings.showRemarks
-        })
+      await supabaseService.updateSettings(1, {
+        principal_name: resultSettings.principalName,
+        principal_title: resultSettings.principalTitle,
+        proprietress_name: resultSettings.proprietressName,
+        proprietress_title: resultSettings.proprietressTitle,
+        school_motto: resultSettings.schoolMotto,
+        result_header: resultSettings.resultHeader,
+        result_footer: resultSettings.resultFooter,
+        show_grades: resultSettings.showGrades,
+        show_positions: resultSettings.showPositions,
+        show_remarks: resultSettings.showRemarks
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('API error response:', errorData);
-        throw new Error(`Failed to save settings: ${response.status}`);
-      }
 
       // Also save to localStorage for offline access
       localStorage.setItem('resultSettings', JSON.stringify(resultSettings));
