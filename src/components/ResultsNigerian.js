@@ -869,43 +869,49 @@ const ResultsNigerian = ({ user }) => {
           }}>
             <h3 style={{ color: '#f1f5f9', marginBottom: '15px' }}>Select Student for Result Entry</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
-              {students.map(student => (
-                <div
-                  key={student.id}
-                  onClick={() => handleStudentSelect(student)}
-                  style={{
-                    background: 'rgba(51, 65, 85, 0.5)',
-                    border: '2px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    padding: '15px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.background = 'rgba(59, 130, 246, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.borderColor = 'rgba(148, 163, 184, 0.3)';
-                    e.target.style.background = 'rgba(51, 65, 85, 0.5)';
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                    <span style={{ color: '#f1f5f9', fontWeight: '600' }}>
-                      {student.firstName} {student.lastName}
-                    </span>
-                    <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-                      {student.admissionNumber}
-                    </span>
-                  </div>
-                  <div style={{ color: '#60a5fa', fontSize: '0.9rem', marginBottom: '5px' }}>
-                    {student.studentClass}
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-                    {student.registeredSubjects.length} subjects
-                  </div>
+              {students.length === 0 ? (
+                <div style={{ color: '#94a3b8', padding: '20px', fontStyle: 'italic' }}>
+                  No students registered yet. Please go to the "Students" menu to register a student first.
                 </div>
-              ))}
+              ) : (
+                students.map(student => (
+                  <div
+                    key={student.id}
+                    onClick={() => handleStudentSelect(student)}
+                    style={{
+                      background: 'rgba(51, 65, 85, 0.5)',
+                      border: '2px solid rgba(148, 163, 184, 0.3)',
+                      borderRadius: '8px',
+                      padding: '15px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.borderColor = '#3b82f6';
+                      e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+                      e.target.style.background = 'rgba(51, 65, 85, 0.5)';
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                      <span style={{ color: '#f1f5f9', fontWeight: '600' }}>
+                        {student.firstName} {student.lastName}
+                      </span>
+                      <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                        {student.admissionNumber}
+                      </span>
+                    </div>
+                    <div style={{ color: '#60a5fa', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      {student.studentClass}
+                    </div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                      {student.registeredSubjects.length} subjects
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>
