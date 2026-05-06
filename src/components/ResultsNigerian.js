@@ -872,14 +872,39 @@ const ResultsNigerian = ({ user }) => {
             padding: '20px',
             marginBottom: '20px'
           }}>
-            <h3 style={{ color: '#f1f5f9', marginBottom: '15px' }}>Select Student for Result Entry</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+              <h3 style={{ color: '#f1f5f9', margin: 0 }}>Select Student for Result Entry</h3>
+              
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  background: 'rgba(51, 65, 85, 0.5)',
+                  border: '1px solid rgba(148, 163, 184, 0.3)',
+                  color: '#fff',
+                  minWidth: '150px'
+                }}
+              >
+                <option value="">All Classes</option>
+                {teacherClasses.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
               {students.length === 0 ? (
-                <div style={{ color: '#94a3b8', padding: '20px', fontStyle: 'italic' }}>
+                <div style={{ color: '#94a3b8', padding: '20px', fontStyle: 'italic', gridColumn: '1 / -1' }}>
                   No students registered yet. Please go to the "Students" menu to register a student first.
                 </div>
+              ) : students.filter(s => selectedClass ? s.studentClass === selectedClass : true).length === 0 ? (
+                <div style={{ color: '#94a3b8', padding: '20px', fontStyle: 'italic', gridColumn: '1 / -1' }}>
+                  No students found in {selectedClass}.
+                </div>
               ) : (
-                students.map(student => (
+                students
+                  .filter(student => selectedClass ? student.studentClass === selectedClass : true)
+                  .map(student => (
                   <div
                     key={student.id}
                     onClick={() => handleStudentSelect(student)}
