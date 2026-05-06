@@ -1,52 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ResultsNigerian from './ResultsNigerian';
 import StudentClean from './StudentClean';
 import TeacherClean from './TeacherClean';
-import ClassesClean from './ClassesClean';
 import Settings from './Settings';
 import TeacherActivityLog from './TeacherActivityLog';
+import { supabaseService } from '../services/supabaseService';
 
 const SimpleDashboardMinimal = ({ user, onLogout }) => {
   const [activeMenu, setActiveMenu] = useState('overview');
+  const [stats, setStats] = useState({ students: null, teachers: null, classes: null, results: null });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [students, teachers, results] = await Promise.all([
+          supabaseService.getStudents(),
+          supabaseService.getTeachers(),
+          supabaseService.getStudentResults()
+        ]);
+        const classes = [...new Set(students.map(s => s.studentClass).filter(Boolean))];
+        setStats({
+          students: students.length,
+          teachers: teachers.length,
+          classes: classes.length,
+          results: results.length
+        });
+      } catch (e) {
+        console.error('Failed to load dashboard stats:', e);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const renderContent = () => {
     switch (activeMenu) {
       case 'overview':
         return (
           <div style={{ padding: '20px' }}>
-            <h2 style={{ color: '#f1f5f9', marginBottom: '20px' }}>Dashboard Overview</h2>
+            <h2 style={{ color: '#f1f5f9', marginBottom: '5px' }}>Dashboard Overview</h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '25px' }}>Live data from database</p>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
               gap: '20px'
             }}>
-              <div style={{
-                background: 'rgba(30, 41, 59, 0.8)',
-                padding: '20px',
-                borderRadius: '8px',
-                border: '1px solid rgba(148, 163, 184, 0.2)'
-              }}>
-                <h3 style={{ color: '#60a5fa', marginBottom: '10px' }}>Total Students</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f1f5f9' }}>156</p>
-              </div>
-              <div style={{
-                background: 'rgba(30, 41, 59, 0.8)',
-                padding: '20px',
-                borderRadius: '8px',
-                border: '1px solid rgba(148, 163, 184, 0.2)'
-              }}>
-                <h3 style={{ color: '#60a5fa', marginBottom: '10px' }}>Total Teachers</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f1f5f9' }}>24</p>
-              </div>
-              <div style={{
-                background: 'rgba(30, 41, 59, 0.8)',
-                padding: '20px',
-                borderRadius: '8px',
-                border: '1px solid rgba(148, 163, 184, 0.2)'
-              }}>
-                <h3 style={{ color: '#60a5fa', marginBottom: '10px' }}>Total Classes</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f1f5f9' }}>12</p>
-              </div>
+              {[
+                { label: 'Total Students', value: stats.students, icon: '🎓', color: '#3b82f6' },
+                { label: 'Total Teachers', value: stats.teachers, icon: '👨‍🏫', color: '#22c55e' },
+                { label: 'Active Classes', value: stats.classes, icon: '🏫', color: '#a855f7' },
+                { label: 'Results Saved', value: stats.results, icon: '📄', color: '#f59e0b' }
+              ].map(card => (
+                <div key={card.label} style={{
+                  background: 'rgba(30, 41, 59, 0.8)',
+                  padding: '24px',
+                  borderRadius: '12px',
+                  border: `1px solid ${card.color}40`,
+                  boxShadow: `0 0 20px ${card.color}15`,
+                  transition: 'transform 0.2s'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h3 style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>{card.label}</h3>
+                    <span style={{ fontSize: '1.5rem' }}>{card.icon}</span>
+                  </div>
+                  <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: card.color, margin: 0 }}>
+                    {statsLoading ? '...' : card.value ?? 0}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '30px', background: 'rgba(30, 41, 59, 0.8)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(148, 163, 184, 0.2)' }}>
+              <h3 style={{ color: '#f1f5f9', marginBottom: '10px', fontSize: '1rem' }}>👋 Welcome back, {user?.name || user?.email}</h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>You are logged in as <strong style={{ color: '#60a5fa' }}>{user?.role?.replace('_', ' ').toUpperCase()}</strong>. Use the sidebar to navigate.</p>
             </div>
           </div>
         );
