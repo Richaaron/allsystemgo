@@ -616,6 +616,7 @@ export const supabaseService = {
           parent_guardian_name: studentData.parentName || 'Unknown',
           parent_guardian_phone: studentData.parentPhone || '0000000000',
           parent_guardian_email: studentData.parentEmail || null,
+          parent_guardian_relationship: 'Parent',
           student_class: studentData.class || 'Unassigned',
           status: 'active',
           gender: studentData.gender || 'Unknown',
@@ -718,6 +719,7 @@ export const supabaseService = {
         parent_guardian_name: 'Mr. & Mrs. Default',
         parent_guardian_phone: '08000000000',
         parent_guardian_email: 'parent@example.com',
+        parent_guardian_relationship: 'Parent',
         address: '123 School Road'
       };
 
