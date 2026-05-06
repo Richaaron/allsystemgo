@@ -321,6 +321,7 @@ body {
   flex-direction: column;
   transition: transform 0.3s ease;
   z-index: 100;
+  overflow-y: auto;
 }
 
 .dashboard-content {
