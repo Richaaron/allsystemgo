@@ -812,7 +812,7 @@ const ResultsNigerian = ({ user }) => {
           )}
         </div>
 
-        {user?.role === 'dual_role' && (
+        {(user?.role === 'dual_role' || user?.role === 'admin') && (
           <div style={{ display: 'flex', gap: '10px', background: 'rgba(30, 41, 59, 0.8)', padding: '5px', borderRadius: '8px' }}>
             <button
               onClick={() => setActiveView('class')}
