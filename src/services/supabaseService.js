@@ -718,13 +718,7 @@ export const supabaseService = {
         parent_guardian_name: 'Mr. & Mrs. Default',
         parent_guardian_phone: '08000000000',
         parent_guardian_email: 'parent@example.com',
-        address: '123 School Road',
-        blood_group: 'O+',
-        genotype: 'AA',
-        state_of_origin: 'Kaduna',
-        lga: 'Kaduna North',
-        religion: 'Christianity',
-        enrollment_date: '2024-01-01'
+        address: '123 School Road'
       };
 
       const sampleStudents = [
