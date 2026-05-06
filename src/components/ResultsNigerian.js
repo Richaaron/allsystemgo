@@ -23,93 +23,35 @@ const ResultsNigerian = ({ user }) => {
   const [selectedResultIds, setSelectedResultIds] = useState([]);
   const [isSending, setIsSending] = useState(false);
 
-  // Sample students with their registered subjects
-  const sampleStudents = [
-    {
-      id: 1,
-      admissionNumber: 'FVS/2024/0001',
-      firstName: 'Ahmed',
-      lastName: 'Bello',
-      studentClass: 'JSS 2',
-      registeredSubjects: [
-        { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Basic Science', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Social Studies', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Civic Education', maxCA1: 20, maxCA2: 20, maxExam: 60 }
-      ]
-    },
-    {
-      id: 2,
-      admissionNumber: 'FVS/2024/0002',
-      firstName: 'Chinyere',
-      lastName: 'Okonkwo',
-      studentClass: 'JSS 2',
-      registeredSubjects: [
-        { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Basic Science', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Basic Technology', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Business Studies', maxCA1: 20, maxCA2: 20, maxExam: 60 }
-      ]
-    },
-    {
-      id: 3,
-      admissionNumber: 'FVS/2024/0003',
-      firstName: 'Tunde',
-      lastName: 'Johnson',
-      studentClass: 'SSS 1',
-      registeredSubjects: [
-        { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Physics', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Chemistry', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Biology', maxCA1: 20, maxCA2: 20, maxExam: 60 }
-      ]
-    },
-    {
-      id: 4,
-      admissionNumber: 'FVS/2024/0004',
-      firstName: 'Fatima',
-      lastName: 'Mohammed',
-      studentClass: 'SSS 1',
-      registeredSubjects: [
-        { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Physics', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Chemistry', maxCA1: 20, maxCA2: 20, maxExam: 60 },
-        { name: 'Geography', maxCA1: 20, maxCA2: 20, maxExam: 60 }
-      ]
-    }
-  ];
-
-  // Sample existing results
-  const sampleResults = [
-    {
-      id: 1,
-      studentId: 1,
-      studentName: 'Ahmed Bello',
-      studentClass: 'JSS 2',
-      term: 'Second Term',
-      subjects: [
-        { name: 'English Language', ca1: 18, ca2: 19, exam: 48, total: 85, grade: 'A' },
-        { name: 'Mathematics', ca1: 16, ca2: 17, exam: 45, total: 78, grade: 'B' },
-        { name: 'Basic Science', ca1: 17, ca2: 18, exam: 50, total: 85, grade: 'A' }
-      ],
-      overallTotal: 248,
-      overallAverage: 82.7,
-      overallGrade: 'A',
-      status: 'published'
-    }
-  ];
-
   useEffect(() => {
-    setStudents(sampleStudents);
-    setResults(sampleResults);
-    
+    loadLiveStudentsAndResults();
     // Load result settings from API or localStorage
     loadResultSettings();
-  }, []);
+  }, [term]);
+
+  const loadLiveStudentsAndResults = async () => {
+    try {
+      // Fetch live data
+      const fetchedStudents = await supabaseService.getStudents();
+      const fetchedResults = await supabaseService.getStudentResults(term);
+      
+      // If no students exist, auto-seed the sample data into Supabase
+      if (fetchedStudents.length === 0) {
+        console.log('No students found. Running auto-seed...');
+        await supabaseService.seedSampleData();
+        // Re-fetch after seeding
+        const newlySeededStudents = await supabaseService.getStudents();
+        const newlySeededResults = await supabaseService.getStudentResults(term);
+        setStudents(newlySeededStudents);
+        setResults(newlySeededResults);
+      } else {
+        setStudents(fetchedStudents);
+        setResults(fetchedResults);
+      }
+    } catch (e) {
+      console.error('Failed to load students and results:', e);
+    }
+  };
 
   const loadResultSettings = async () => {
     try {
@@ -423,6 +365,72 @@ const ResultsNigerian = ({ user }) => {
   };
 
   const handleSaveSubjectScores = async () => {
+    // Collect the scores for the selected class/subject and compile them
+    const updatedResults = [...results];
+    
+    for (const [studentId, scores] of Object.entries(subjectScores)) {
+      const student = students.find(s => s.id === parseInt(studentId));
+      if (!student) continue;
+
+      let existingResultIndex = updatedResults.findIndex(r => r.studentId === student.id && r.term === term);
+      
+      let currentResult;
+      if (existingResultIndex >= 0) {
+        currentResult = { ...updatedResults[existingResultIndex] };
+      } else {
+        currentResult = {
+          studentId: student.id,
+          studentName: `${student.firstName} ${student.lastName}`,
+          studentClass: student.studentClass,
+          term: term,
+          subjects: []
+        };
+      }
+
+      // Update or add subject
+      const subjectIndex = currentResult.subjects.findIndex(s => s.name === selectedSubject);
+      const subjectData = {
+        name: selectedSubject,
+        ca1: parseInt(scores.ca1) || 0,
+        ca2: parseInt(scores.ca2) || 0,
+        exam: parseInt(scores.exam) || 0,
+        total: scores.total || 0,
+        grade: scores.grade || 'F'
+      };
+
+      if (subjectIndex >= 0) {
+        currentResult.subjects[subjectIndex] = subjectData;
+      } else {
+        currentResult.subjects.push(subjectData);
+      }
+
+      // Recalculate overall
+      currentResult.overallTotal = currentResult.subjects.reduce((sum, subj) => sum + subj.total, 0);
+      currentResult.overallAverage = currentResult.subjects.length > 0 
+        ? currentResult.overallTotal / currentResult.subjects.length 
+        : 0;
+      currentResult.overallGrade = getGrade(currentResult.overallAverage);
+
+      // Save to Supabase
+      await supabaseService.saveStudentResult(
+        student, 
+        term, 
+        currentResult.subjects, 
+        currentResult.overallTotal, 
+        currentResult.overallAverage, 
+        currentResult.overallGrade
+      );
+
+      // Update local state
+      if (existingResultIndex >= 0) {
+        updatedResults[existingResultIndex] = currentResult;
+      } else {
+        updatedResults.push(currentResult);
+      }
+    }
+
+    setResults(updatedResults);
+    
     alert(`Subject results for ${selectedSubject} in ${selectedClass} saved successfully!`);
     
     // Log the activity

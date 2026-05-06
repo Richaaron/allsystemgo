@@ -507,5 +507,137 @@ export const supabaseService = {
       console.warn('⚠️ Fetching activities failed:', e.message);
       return [];
     }
+  },
+
+  // Students Data Operations
+  async getStudents() {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('first_name', { ascending: true });
+      if (error) throw error;
+      
+      // Map db column names to frontend camelCase
+      return (data || []).map(s => ({
+        id: s.id,
+        admissionNumber: s.admission_number,
+        firstName: s.first_name,
+        lastName: s.last_name,
+        studentClass: s.student_class,
+        registeredSubjects: s.registered_subjects
+      }));
+    } catch (e) {
+      console.error('❌ Error fetching students:', e.message);
+      return [];
+    }
+  },
+
+  async getStudentResults(term) {
+    try {
+      let query = supabase.from('student_results').select('*');
+      if (term) query = query.eq('term', term);
+      
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Map db column names to frontend camelCase
+      return (data || []).map(r => ({
+        id: r.id,
+        studentId: r.student_id,
+        studentName: r.student_name,
+        studentClass: r.student_class,
+        term: r.term,
+        subjects: r.subjects,
+        overallTotal: r.overall_total,
+        overallAverage: Number(r.overall_average),
+        overallGrade: r.overall_grade,
+        principalRemark: r.principal_remark,
+        teacherRemark: r.teacher_remark
+      }));
+    } catch (e) {
+      console.error('❌ Error fetching results:', e.message);
+      return [];
+    }
+  },
+
+  async saveStudentResult(student, term, subjectsArray, overallTotal, overallAverage, overallGrade) {
+    try {
+      // Upsert: Try to update if exists (by student_id and term), else insert
+      const { data, error } = await supabase
+        .from('student_results')
+        .upsert([{
+          student_id: student.id,
+          student_name: `${student.firstName} ${student.lastName}`,
+          student_class: student.studentClass,
+          term: term,
+          subjects: subjectsArray,
+          overall_total: overallTotal,
+          overall_average: overallAverage,
+          overall_grade: overallGrade,
+          school_id: 1
+        }], { onConflict: 'student_id,term' })
+        .select();
+        
+      if (error) throw error;
+      return { success: true, data };
+    } catch (e) {
+      console.error('❌ Error saving result:', e.message);
+      return { success: false, message: e.message };
+    }
+  },
+
+  async seedSampleData() {
+    try {
+      // Check if students already exist
+      const { count } = await supabase.from('students').select('*', { count: 'exact', head: true });
+      if (count > 0) {
+        console.log('🌱 Database already seeded.');
+        return;
+      }
+
+      console.log('🌱 Seeding database with initial students...');
+      
+      const sampleStudents = [
+        { admission_number: 'FVS/2024/0001', first_name: 'Ahmed', last_name: 'Bello', student_class: 'JSS 2', registered_subjects: [
+            { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Basic Science', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Social Studies', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Civic Education', maxCA1: 20, maxCA2: 20, maxExam: 60 }
+        ]},
+        { admission_number: 'FVS/2024/0002', first_name: 'Chinyere', last_name: 'Okonkwo', student_class: 'JSS 2', registered_subjects: [
+            { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Basic Science', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Basic Technology', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Business Studies', maxCA1: 20, maxCA2: 20, maxExam: 60 }
+        ]},
+        { admission_number: 'FVS/2024/0003', first_name: 'Tunde', last_name: 'Johnson', student_class: 'SSS 1', registered_subjects: [
+            { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Physics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Chemistry', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Biology', maxCA1: 20, maxCA2: 20, maxExam: 60 }
+        ]},
+        { admission_number: 'FVS/2024/0004', first_name: 'Fatima', last_name: 'Mohammed', student_class: 'SSS 1', registered_subjects: [
+            { name: 'English Language', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Mathematics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Physics', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Chemistry', maxCA1: 20, maxCA2: 20, maxExam: 60 }, { name: 'Geography', maxCA1: 20, maxCA2: 20, maxExam: 60 }
+        ]}
+      ];
+
+      const { data: insertedStudents, error: studentError } = await supabase.from('students').insert(sampleStudents).select();
+      if (studentError) throw studentError;
+
+      // Seed 1 result
+      if (insertedStudents && insertedStudents.length > 0) {
+        const firstStudent = insertedStudents[0];
+        await supabase.from('student_results').insert([{
+          student_id: firstStudent.id,
+          student_name: `${firstStudent.first_name} ${firstStudent.last_name}`,
+          student_class: firstStudent.student_class,
+          term: 'Second Term',
+          subjects: [
+            { name: 'English Language', ca1: 18, ca2: 19, exam: 48, total: 85, grade: 'A' },
+            { name: 'Mathematics', ca1: 16, ca2: 17, exam: 45, total: 78, grade: 'B' },
+            { name: 'Basic Science', ca1: 17, ca2: 18, exam: 50, total: 85, grade: 'A' }
+          ],
+          overall_total: 248,
+          overall_average: 82.7,
+          overall_grade: 'A',
+          school_id: 1
+        }]);
+      }
+      console.log('✅ Seed complete.');
+    } catch (e) {
+      console.error('❌ Seeding failed:', e.message);
+    }
   }
 }
