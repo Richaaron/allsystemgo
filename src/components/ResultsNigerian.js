@@ -7,6 +7,7 @@ const ResultsNigerian = ({ user }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [term, setTerm] = useState('Second Term');
+  const [academicSession, setAcademicSession] = useState('2023/2024');
   const [results, setResults] = useState([]);
   const [formData, setFormData] = useState({});
   const [resultSettings, setResultSettings] = useState({
@@ -30,13 +31,13 @@ const ResultsNigerian = ({ user }) => {
     loadLiveStudentsAndResults();
     // Load result settings from API or localStorage
     loadResultSettings();
-  }, [term]);
+  }, [term, academicSession]);
 
   const loadLiveStudentsAndResults = async () => {
     try {
       // Fetch live data from Supabase (no auto-seeding)
       const fetchedStudents = await supabaseService.getStudents();
-      const fetchedResults = await supabaseService.getStudentResults(term);
+      const fetchedResults = await supabaseService.getStudentResults(term, academicSession);
       setStudents(fetchedStudents);
       setResults(fetchedResults);
     } catch (e) {
@@ -229,6 +230,7 @@ const ResultsNigerian = ({ user }) => {
       const saveResult = await supabaseService.saveStudentResult(
         selectedStudent,
         term,
+        academicSession,
         subjectResults,
         overallScores.total,
         overallScores.average,
@@ -237,7 +239,7 @@ const ResultsNigerian = ({ user }) => {
 
       if (saveResult.success) {
         // Reload results from database to get accurate IDs and data
-        const freshResults = await supabaseService.getStudentResults(term);
+        const freshResults = await supabaseService.getStudentResults(term, academicSession);
         setResults(freshResults);
 
         // Log the activity
@@ -326,6 +328,7 @@ const ResultsNigerian = ({ user }) => {
       await supabaseService.saveStudentResult(
         student,
         term,
+        academicSession,
         currentSubjects,
         overallTotal,
         overallAverage,
@@ -335,7 +338,7 @@ const ResultsNigerian = ({ user }) => {
     }
 
     // Reload fresh results from Supabase
-    const freshResults = await supabaseService.getStudentResults(term);
+    const freshResults = await supabaseService.getStudentResults(term, academicSession);
     setResults(freshResults);
 
     alert(`${selectedSubject} results for ${selectedClass} saved for ${savedCount} student(s)!`);
@@ -845,22 +848,42 @@ const ResultsNigerian = ({ user }) => {
           </div>
         )}
 
-        <select
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          style={{
-            background: 'rgba(51, 65, 85, 0.5)',
-            border: '2px solid rgba(148, 163, 184, 0.3)',
-            borderRadius: '8px',
-            color: '#f1f5f9',
-            padding: '10px',
-            fontSize: '1rem'
-          }}
-        >
-          <option value="First Term">First Term</option>
-          <option value="Second Term">Second Term</option>
-          <option value="Third Term">Third Term</option>
-        </select>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <select
+            value={academicSession}
+            onChange={(e) => setAcademicSession(e.target.value)}
+            style={{
+              background: 'rgba(51, 65, 85, 0.5)',
+              border: '2px solid rgba(148, 163, 184, 0.3)',
+              borderRadius: '8px',
+              color: '#f1f5f9',
+              padding: '10px',
+              fontSize: '1rem'
+            }}
+          >
+            <option value="2023/2024">2023/2024</option>
+            <option value="2024/2025">2024/2025</option>
+            <option value="2025/2026">2025/2026</option>
+            <option value="2026/2027">2026/2027</option>
+          </select>
+
+          <select
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            style={{
+              background: 'rgba(51, 65, 85, 0.5)',
+              border: '2px solid rgba(148, 163, 184, 0.3)',
+              borderRadius: '8px',
+              color: '#f1f5f9',
+              padding: '10px',
+              fontSize: '1rem'
+            }}
+          >
+            <option value="First Term">First Term</option>
+            <option value="Second Term">Second Term</option>
+            <option value="Third Term">Third Term</option>
+          </select>
+        </div>
       </div>
 
       {activeView === 'class' ? (

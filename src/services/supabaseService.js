@@ -655,10 +655,11 @@ export const supabaseService = {
     }
   },
 
-  async getStudentResults(term) {
+  async getStudentResults(term, academicSession) {
     try {
       let query = supabase.from('student_results').select('*');
       if (term) query = query.eq('term', term);
+      if (academicSession) query = query.eq('academic_session', academicSession);
       
       const { data, error } = await query;
       if (error) throw error;
@@ -670,6 +671,7 @@ export const supabaseService = {
         studentName: r.student_name,
         studentClass: r.student_class,
         term: r.term,
+        academicSession: r.academic_session || '2023/2024',
         subjects: r.subjects || [],
         overallTotal: r.overall_total || 0,
         overallAverage: Number(r.overall_average) || 0,
@@ -684,9 +686,9 @@ export const supabaseService = {
     }
   },
 
-  async saveStudentResult(student, term, subjectsArray, overallTotal, overallAverage, overallGrade) {
+  async saveStudentResult(student, term, academicSession, subjectsArray, overallTotal, overallAverage, overallGrade) {
     try {
-      // Upsert: Try to update if exists (by student_id and term), else insert
+      // Upsert: Try to update if exists (by student_id, term, and academic_session), else insert
       const { data, error } = await supabase
         .from('student_results')
         .upsert([{
@@ -694,12 +696,13 @@ export const supabaseService = {
           student_name: `${student.firstName} ${student.lastName}`,
           student_class: student.studentClass,
           term: term,
+          academic_session: academicSession,
           subjects: subjectsArray,
           overall_total: overallTotal,
           overall_average: overallAverage,
           overall_grade: overallGrade,
           school_id: 1
-        }], { onConflict: 'student_id,term' })
+        }], { onConflict: 'student_id,term,academic_session' })
         .select();
         
       if (error) throw error;
