@@ -13,7 +13,10 @@ const ResultsNigerian = ({ user }) => {
     principalName: '',
     proprietressName: '',
     resultHeader: 'FOLUSHO VICTORY SCHOOLS',
-    resultFooter: 'Approved by the Ministry of Education'
+    resultFooter: 'Approved by the Ministry of Education',
+    schoolAddress: '',
+    schoolPhone: '',
+    schoolEmail: ''
   });
   const [printingResultId, setPrintingResultId] = useState(null);
   const [activeView, setActiveView] = useState(user?.role === 'subject_teacher' ? 'subject' : 'class');
@@ -64,7 +67,10 @@ const ResultsNigerian = ({ user }) => {
             principalName: parsed.principalName || '',
             proprietressName: parsed.proprietressName || '',
             resultHeader: parsed.resultHeader || 'FOLUSHO VICTORY SCHOOLS',
-            resultFooter: parsed.resultFooter || 'Approved by the Ministry of Education'
+            resultFooter: parsed.resultFooter || 'Approved by the Ministry of Education',
+            schoolAddress: parsed.schoolAddress || '',
+            schoolPhone: parsed.schoolPhone || '',
+            schoolEmail: parsed.schoolEmail || ''
           });
           console.log('✓ Loaded result settings from localStorage');
           return;
@@ -108,7 +114,10 @@ const ResultsNigerian = ({ user }) => {
           principalName: data.principal_name || '',
           proprietressName: data.proprietress_name || '',
           resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
-          resultFooter: data.result_footer || 'Approved by the Ministry of Education'
+          resultFooter: data.result_footer || 'Approved by the Ministry of Education',
+          schoolAddress: data.school_address || '',
+          schoolPhone: data.school_phone || '',
+          schoolEmail: data.school_email || ''
         });
       } catch (fetchError) {
         if (fetchError.name === 'AbortError') {
@@ -647,6 +656,19 @@ const ResultsNigerian = ({ user }) => {
               <p style={{ margin: '0', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '3px', color: '#1e3a8a', fontWeight: '600' }}>
                 Official Academic Report
               </p>
+              {(resultSettings.schoolAddress || resultSettings.schoolPhone || resultSettings.schoolEmail) && (
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>
+                  {resultSettings.schoolAddress && (
+                    <p style={{ margin: '2px 0' }}>📍 {resultSettings.schoolAddress}</p>
+                  )}
+                  {resultSettings.schoolPhone && (
+                    <p style={{ margin: '2px 0' }}>📞 {resultSettings.schoolPhone}</p>
+                  )}
+                  {resultSettings.schoolEmail && (
+                    <p style={{ margin: '2px 0' }}>✉️ {resultSettings.schoolEmail}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Student Info & Medallion Section */}

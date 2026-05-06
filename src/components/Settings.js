@@ -35,6 +35,9 @@ const Settings = ({ user }) => {
     schoolMotto: 'Excellence in Education',
     resultHeader: 'FOLUSHO VICTORY SCHOOLS',
     resultFooter: 'Approved by the Ministry of Education',
+    schoolAddress: '123 Education Road, Kaduna',
+    schoolPhone: '+234-800-000-0000',
+    schoolEmail: 'info@folushovictory.com',
     showGrades: true,
     showPositions: true,
     showRemarks: true
@@ -63,6 +66,9 @@ const Settings = ({ user }) => {
           schoolMotto: data.school_motto || 'Excellence in Education Since 2009',
           resultHeader: data.result_header || 'FOLUSHO VICTORY SCHOOLS',
           resultFooter: data.result_footer || 'Approved by the Ministry of Education',
+          schoolAddress: data.school_address || 'Kaduna, Kaduna State',
+          schoolPhone: data.school_phone || '+234-800-000-0000',
+          schoolEmail: data.school_email || 'info@folushovictory.com',
           showGrades: data.show_grades !== false,
           showPositions: data.show_positions !== false,
           showRemarks: data.show_remarks !== false
@@ -327,6 +333,9 @@ const Settings = ({ user }) => {
         school_motto: resultSettings.schoolMotto,
         result_header: resultSettings.resultHeader,
         result_footer: resultSettings.resultFooter,
+        school_address: resultSettings.schoolAddress,
+        school_phone: resultSettings.schoolPhone,
+        school_email: resultSettings.schoolEmail,
         show_grades: resultSettings.showGrades,
         show_positions: resultSettings.showPositions,
         show_remarks: resultSettings.showRemarks
@@ -571,6 +580,41 @@ const Settings = ({ user }) => {
             value={resultSettings.resultFooter}
             onChange={handleSettingsInputChange}
             placeholder="Result document footer"
+          />
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label>School Address</label>
+            <input
+              type="text"
+              name="schoolAddress"
+              value={resultSettings.schoolAddress}
+              onChange={handleSettingsInputChange}
+              placeholder="e.g., 123 Education Road, Kaduna"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>School Phone Number</label>
+            <input
+              type="text"
+              name="schoolPhone"
+              value={resultSettings.schoolPhone}
+              onChange={handleSettingsInputChange}
+              placeholder="e.g., +234-800-000-0000"
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>School Email</label>
+          <input
+            type="email"
+            name="schoolEmail"
+            value={resultSettings.schoolEmail}
+            onChange={handleSettingsInputChange}
+            placeholder="e.g., info@folushovictory.com"
           />
         </div>
 
