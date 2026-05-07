@@ -368,6 +368,26 @@ export const supabaseService = {
     return true
   },
 
+  async updateStudentSubjects(id, studentClass, registeredSubjects) {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .update({
+          student_class: studentClass,
+          registered_subjects: registeredSubjects
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (e) {
+      console.error('❌ Error updating student subjects:', e.message);
+      return { success: false, message: e.message };
+    }
+  },
+
   // Classes
   async getClasses() {
     const { data, error } = await supabase
@@ -627,7 +647,7 @@ export const supabaseService = {
           gender: studentData.gender || 'Unknown',
           date_of_birth: studentData.dateOfBirth || '2000-01-01',
           address: studentData.address || 'Unknown',
-          registered_subjects: []
+          registered_subjects: studentData.registeredSubjects || []
         }])
         .select()
         .single();

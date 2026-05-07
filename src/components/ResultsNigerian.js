@@ -787,12 +787,28 @@ const ResultsNigerian = ({ user }) => {
     );
   };
 
-  const teacherClasses = [...new Set(students.map(s => s.studentClass))];
-  
+  // Predefined subject lists
+  const SSS_SUBJECTS = [
+    'English Language', 'Mathematics (SSS)', 'Further Mathematics',
+    'Physics', 'Chemistry', 'Biology', 'Agricultural Science',
+    'Economics', 'Government', 'Commerce', 'Accounts',
+    'Literature in English', 'CRS/IRS', 'Geography',
+    'Computer Science', 'Physical Education', 'Fine Art'
+  ];
+  const JSS_SUBJECTS = [
+    'English Language', 'Mathematics', 'Basic Science', 'Basic Technology',
+    'Social Studies', 'Civic Education', 'CRS/IRS', 'French',
+    'Agricultural Science', 'Computer Studies', 'Physical Education',
+    'Fine Arts', 'Music', 'Home Economics'
+  ];
+
   // Use actual subjects assigned to the teacher, or all subjects if admin
-  const teacherSubjects = user?.role === 'admin' 
-    ? [...new Set(students.flatMap(s => s.registeredSubjects?.map(rs => rs.name) || []))]
-    : user?.subjects || [];
+  const derivedSubjectsFromStudents = [...new Set(students.flatMap(s => s.registeredSubjects?.map(rs => rs.name) || []))];
+  const isSSS = selectedClass?.startsWith('SSS');
+  const fallbackSubjects = isSSS ? SSS_SUBJECTS : JSS_SUBJECTS;
+  const teacherSubjects = user?.role === 'admin'
+    ? (derivedSubjectsFromStudents.length > 0 ? derivedSubjectsFromStudents : [...SSS_SUBJECTS, ...JSS_SUBJECTS.filter(s => !SSS_SUBJECTS.includes(s))])
+    : (user?.subjects?.length > 0 ? user.subjects : fallbackSubjects);
     
   const studentsInSelectedClass = students.filter(s => s.studentClass === selectedClass);
 
