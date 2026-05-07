@@ -812,6 +812,13 @@ const ResultsNigerian = ({ user }) => {
     
   const studentsInSelectedClass = students.filter(s => s.studentClass === selectedClass);
 
+  // Derive the list of classes available to this user
+  const teacherClasses = user?.role === 'admin' || user?.role === 'dual_role'
+    ? [...new Set(students.map(s => s.studentClass).filter(Boolean))].sort()
+    : user?.assignedClass
+      ? [user.assignedClass]
+      : [...new Set(students.map(s => s.studentClass).filter(Boolean))].sort();
+
   return (
     <div style={{ padding: '20px' }}>
       <div style={{
