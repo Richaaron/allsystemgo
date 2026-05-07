@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { emailNotificationService } from '../services/emailNotificationService';
 import { supabaseService } from '../services/supabaseService';
+import { NIGERIAN_SUBJECTS } from '../data/models';
 
 const ResultsNigerian = ({ user }) => {
   const [students, setStudents] = useState([]);
@@ -787,27 +788,26 @@ const ResultsNigerian = ({ user }) => {
     );
   };
 
-  // Predefined subject lists
+  // Subject lists sourced from models.js (single source of truth)
+  const JSS_SUBJECTS = NIGERIAN_SUBJECTS.JSS_SUBJECTS;
+  // Flatten the SSS subjects object into one array with core subjects prepended
   const SSS_SUBJECTS = [
-    'English Language', 'Mathematics (SSS)', 'Further Mathematics',
-    'Physics', 'Chemistry', 'Biology', 'Agricultural Science',
-    'Economics', 'Government', 'Commerce', 'Accounts',
-    'Literature in English', 'CRS/IRS', 'Geography',
-    'Computer Science', 'Physical Education', 'Fine Art'
+    'English Language', 'Mathematics',
+    ...NIGERIAN_SUBJECTS.SSS_SUBJECTS.SCIENCE,
+    ...NIGERIAN_SUBJECTS.SSS_SUBJECTS.ART,
+    ...NIGERIAN_SUBJECTS.SSS_SUBJECTS.COMMERCIAL,
+    ...NIGERIAN_SUBJECTS.SSS_SUBJECTS.GENERAL
   ];
-  const JSS_SUBJECTS = [
-    'English Language', 'Mathematics', 'Basic Science', 'Basic Technology',
-    'Social Studies', 'Civic Education', 'CRS/IRS', 'French',
-    'Agricultural Science', 'Computer Studies', 'Physical Education',
-    'Fine Arts', 'Music', 'Home Economics'
-  ];
+  // All unique subjects across both levels
+  const ALL_SUBJECTS = [...new Set([...SSS_SUBJECTS, ...JSS_SUBJECTS])];
 
-  // Use actual subjects assigned to the teacher, or all subjects if admin
+  // Use actual subjects registered on students (live), or fall back to model lists
   const derivedSubjectsFromStudents = [...new Set(students.flatMap(s => s.registeredSubjects?.map(rs => rs.name) || []))];
   const isSSS = selectedClass?.startsWith('SSS');
-  const fallbackSubjects = isSSS ? SSS_SUBJECTS : JSS_SUBJECTS;
-  const teacherSubjects = user?.role === 'admin'
-    ? (derivedSubjectsFromStudents.length > 0 ? derivedSubjectsFromStudents : [...SSS_SUBJECTS, ...JSS_SUBJECTS.filter(s => !SSS_SUBJECTS.includes(s))])
+  const isJSS = selectedClass?.startsWith('JSS');
+  const fallbackSubjects = isSSS ? SSS_SUBJECTS : isJSS ? JSS_SUBJECTS : ALL_SUBJECTS;
+  const teacherSubjects = (user?.role === 'admin' || user?.role === 'dual_role')
+    ? (derivedSubjectsFromStudents.length > 0 ? derivedSubjectsFromStudents : fallbackSubjects)
     : (user?.subjects?.length > 0 ? user.subjects : fallbackSubjects);
     
   const studentsInSelectedClass = students.filter(s => s.studentClass === selectedClass);
