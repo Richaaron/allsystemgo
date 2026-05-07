@@ -462,7 +462,7 @@ export const getCurrentTerm = () => {
 export default {
   NIGERIAN_GRADING_SCALE,
   SCHOOL_TERMS,
-  NIGERIAN_CLASSES,
+  CLASS_LEVELS,
   NIGERIAN_SUBJECTS,
   StudentModel,
   TeacherModel,
